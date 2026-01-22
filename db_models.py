@@ -1,9 +1,12 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import ForeignKey
+
 import datetime
 
 base = declarative_base()
 
+#   Map to database tables
 class Sensor(base):
     __tablename__ = "sensors"
     
@@ -18,7 +21,7 @@ class SensorReading(base):
     __tablename__ = "sensor_readings"
 
     id = Column(Integer, primary_key=True, index=True)
-    sensorId = Column(Integer, nullable=False)
+    sensorId = Column(Integer, ForeignKey("sensors.sensorId"))
     readingType = Column(String, nullable=False)
     readingValue = Column(Float, nullable=False)
     readingDate = Column(DateTime, default=datetime.datetime.utcnow)
