@@ -1,7 +1,7 @@
 # Import BaseModel for data validation and no longer need for initialization
 # Pydantic converts data from server side into JSON format to send to client
 from pydantic import BaseModel 
-from datetime import datetime
+from datetime import date, time
 # Import Literal for constrained types
 from typing import Literal 
 
@@ -21,6 +21,8 @@ class SensorReading(BaseModel):
     sensorId: int
     readingType: str
     readingValue: float
-    readingDate: datetime
+    readingDate: date
+    readingTime: time
     description: str
+    
 

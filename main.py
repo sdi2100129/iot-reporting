@@ -3,7 +3,7 @@ from models import Sensor, SensorReading
 from database import session, engine
 from sqlalchemy.orm import Session
 import db_models
-from datetime import datetime
+from datetime import date, time
 
 app = FastAPI()
 
@@ -23,13 +23,13 @@ app = FastAPI()
 
 from sqlalchemy import text
 
-#def reset_db():
-#    db = session()
-#    db.execute(text("DROP SCHEMA public CASCADE;"))
-#    db.execute(text("CREATE SCHEMA public;"))
-#    db.commit()
-#    db.close()
-#reset_db()
+def reset_db():
+    db = session()
+    db.execute(text("DROP SCHEMA public CASCADE;"))
+    db.execute(text("CREATE SCHEMA public;"))
+    db.commit()
+    db.close()
+reset_db()
 
 
 #   Convert the classes into tables
@@ -70,7 +70,8 @@ def init_db():
 
 init_db()
 
-#   Every time we need to interact with the database
+#   Every time we need to interact/connect with the database we create a new session
+#   that we will close after the interaction
 def get_db():
     db = session() 
     try:    
@@ -82,20 +83,35 @@ def get_db():
 @app.get("/sensors/")
 def get_sensors(db : Session = Depends(get_db)):
     db_sensors = db.query(db_models.Sensor).all()
-    return db_sensors
-
+    return {
+        "success": True,
+        "count": len(db_sensors),
+        "data": db_sensors
+    }
 
 @app.get("/sensor/{sensorId}")
 def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if db_sensor :
-        return db_sensor
+        return {
+            "message": "Sensor updated successfully",
+            "sensorId": db_sensor.sensorId,
+            "sensorType": db_sensor.type,
+            "vendorName": db_sensor.vendorName,
+            "vendorEmail": db_sensor.vendorEmail,
+            "description": db_sensor.description,
+            "location": db_sensor.location
+        }
     return {"error": "Sensor not found"}
 
 @app.get("/readings/")
 def get_readings(db : Session = Depends(get_db)):
     db_readings = db.query(db_models.SensorReading).all()
-    return db_readings
+    return {
+        "success": True,
+        "count": len(db_readings),
+        "data": db_readings
+    }
      
 
 @app.post("/sensor/")
@@ -110,7 +126,15 @@ def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
     )
     db.add(db_sensor)
     db.commit()
-    return sensor
+    return {
+        "message": "Sensor added successfully",
+        "sensorId": sensor.sensorId,
+        "sensorType": sensor.type,
+        "vendorName": sensor.vendorName,
+        "vendorEmail": sensor.vendorEmail,      
+        "description": sensor.description,
+        "location": sensor.location 
+    }
 
 
 @app.post("/reading/")
@@ -124,21 +148,39 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     )
     db.add(db_reading)
     db.commit()
-    return reading
+    return {
+        "message": "Reading added successfully",
+        "sensorId": reading.sensorId,
+        "readingType": reading.readingType,
+        "readingValue": reading.readingValue,   
+        "readingDate": reading.readingDate,
+        "readingTime": reading.readingTime,
+        "description": reading.description
+    }
 
 
-@app.delete("/reading/")
+@app.delete("/reading/{readingId}")
 def delete_reading(readingId: int, db : Session = Depends(get_db)):
-    db_reading = db.query(db_models.SensorReading).filter(db_models.SensorReading.readingId == readingId).first()
+    db_reading = db.query(db_models.SensorReading).filter(db_models.SensorReading.id == readingId).first()
     if db_reading:
         db.delete(db_reading)
         db.commit()
-        return "Reading deleted successfully"
-    
+        return {
+            "message": "Reading deleted successfully",
+            "readingId": db_reading.id,
+            "sensorId": db_reading.sensorId,
+            "readingType": db_reading.readingType,
+            "readingValue": db_reading.readingValue,
+            "readingDate": db_reading.readingDate,
+            "readingTime": db_reading.readingTime,
+            "description": db_reading.description
+
+        }  
+          
     return {"error": "Reading not found"}
 
 
-@app.put("/sensor/")
+@app.put("/sensor/{sensorId}")
 def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(get_db)):
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if db_sensor:
@@ -148,18 +190,34 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
         db_sensor.description = updated_sensor.description
         db_sensor.location = updated_sensor.location
         db.commit()
-        return "Sensor updated successfully"
+        return {
+            "message": "Sensor updated successfully",
+            "sensorId": db_sensor.sensorId,
+            "sensorType": db_sensor.type,
+            "vendorName": db_sensor.vendorName,
+            "vendorEmail": db_sensor.vendorEmail,
+            "description": db_sensor.description,
+            "location": db_sensor.location
+        }
     
     return {"error": "Sensor not found"}
 
 
-@app.delete("/sensor/")
+@app.delete("/sensor/{sensorId}")
 def delete_sensor(sensorId: int, db : Session = Depends(get_db)):
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if db_sensor:
         db.delete(db_sensor)
         db.commit()
-        return "Sensor deleted successfully"
+        return {
+            "message": "Sensor deleted successfully",
+            "sensorId": sensorId,
+            "sensorType": db_sensor.type,
+            "vendorName": db_sensor.vendorName, 
+            "vendorEmail": db_sensor.vendorEmail,
+            "description": db_sensor.description,
+            "location": db_sensor.location
+        }
     
     return {"error": "Sensor not found"}
 
@@ -168,7 +226,7 @@ def delete_sensor(sensorId: int, db : Session = Depends(get_db)):
 def search_readings(
     sensor_type: str = None,
     location: str = None,
-    time: datetime = None,
+    time: time = None,
     page: int = 1,
     db: Session = Depends(get_db)
 ):
@@ -190,14 +248,18 @@ def search_readings(
     page_size = 10
     results = query.offset((page - 1) * page_size).limit(page_size).all()
 
-    return results
+    return {
+        "success": True,
+        "count": len(results),
+        "data": results
+    }
 
 
 @app.get("/readings/metrics")
 def readings_metrics(
     sensor_type: str = None,
     location: str = None,
-    time: datetime = None,
+    time: time = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(db_models.SensorReading).join(

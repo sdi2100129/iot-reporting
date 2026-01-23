@@ -1,0 +1,13 @@
+# Virtual environment
+myenv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Environment variables
+.env
+

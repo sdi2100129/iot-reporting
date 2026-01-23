@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, Date, Time
 from sqlalchemy import ForeignKey
 
 import datetime
@@ -24,5 +24,7 @@ class SensorReading(base):
     sensorId = Column(Integer, ForeignKey("sensors.sensorId"))
     readingType = Column(String, nullable=False)
     readingValue = Column(Float, nullable=False)
-    readingDate = Column(DateTime, default=datetime.datetime.utcnow)
+    readingDate = Column(Date, default=datetime.date.today)
+    readingTime = Column(Time, default=datetime.datetime.now().time)
     description = Column(String, nullable=True)
+    
