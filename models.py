@@ -1,6 +1,9 @@
-from pydantic import BaseModel # Import BaseModel for data validation, no longer need for init
+# Import BaseModel for data validation and no longer need for initialization
+# Pydantic converts data from server side into JSON format to send to client
+from pydantic import BaseModel 
 from datetime import datetime
-from typing import Literal # Import Literal for constrained types
+# Import Literal for constrained types
+from typing import Literal 
 
 
 #   Python classes

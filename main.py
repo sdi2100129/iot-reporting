@@ -7,6 +7,20 @@ from datetime import datetime
 
 app = FastAPI()
 
+#from fastapi.middleware.cors import CORSMiddleware
+
+#   Adding cors headers to allow sharing resources between applications
+#origins = ["http://localhost:3000"]
+
+#app.add_middleware(
+#    CORSMiddleware,
+#    allow_origins=origins,
+#    allow_credentials=True,
+#    allow_methods=["*"],
+#    allow_headers=["*"],
+#)
+
+
 from sqlalchemy import text
 
 #def reset_db():
@@ -28,11 +42,14 @@ def greet():
 #   Sample data
 Sensors =  [
     Sensor(sensorId=1, type="Temperature", vendorName="SensorCorp", vendorEmail="sensorcorp@example.com", description="Temperature sensor in the main hall", location="Main Hall"),
+    Sensor(sensorId=4, type="Temperature", vendorName="TempMasters", vendorEmail="tempmasters@example.com", description="Temperature sensor in the lobby", location="Lobby"),
     Sensor(sensorId=2, type="Humidity", vendorName="HumidityInc", vendorEmail="humidityinc@example.com", description="Humidity sensor in the rooftop", location="Rooftop"),
-    Sensor(sensorId=3, type="Acoustic", vendorName="AcousticTech", vendorEmail="acoustictech@example.com", description="Pressure sensor in the elevator", location="Elevator" )
+    Sensor(sensorId=5, type="Humidity", vendorName="ClimateControl", vendorEmail="climatecontrol@example.com", description="Humidity sensor in the basement", location="Basement"),
+    Sensor(sensorId=3, type="Acoustic", vendorName="AcousticTech", vendorEmail="acoustictech@example.com", description="Pressure sensor in the elevator", location="Elevator"),
+    Sensor(sensorId=6, type="Acoustic", vendorName="SoundWave", vendorEmail="soundwave@example.com", description="Acoustic sensor in the conference room", location="Conference Room")
 ]
 
-#   Initialize the database with the sample data
+#   Initialize the sensors database with the sample data
 def init_db():
     db = session()
 
@@ -108,6 +125,17 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     db.add(db_reading)
     db.commit()
     return reading
+
+
+@app.delete("/reading/")
+def delete_reading(readingId: int, db : Session = Depends(get_db)):
+    db_reading = db.query(db_models.SensorReading).filter(db_models.SensorReading.readingId == readingId).first()
+    if db_reading:
+        db.delete(db_reading)
+        db.commit()
+        return "Reading deleted successfully"
+    
+    return {"error": "Reading not found"}
 
 
 @app.put("/sensor/")

@@ -1,7 +1,7 @@
 # iot-reporting-api
 
 WEB-FRAMEWORK SELECTION:
-For the implementation of REST API, I chose fastAPI for web framework, because - as a begginer in API's logic - is easy to learn , easy to develop with, as it reduces a significant part of human error and by reviews i read is also high performance, but i didn't test that. Also a huge advantage for me was the swagger UI feature that fastAPI provides that gave me the opportunity to test the responses of my requests without having to also create the front end.
+For the implementation of REST API, I chose fastAPI for web framework, because - as a begginer in API's logic - is easy to learn , easy to develop with, as it reduces a significant part of human error and by reviews i read is also high performance, but i didn't test that. Also a huge advantage for me was the swagger UI feature that fastAPI provides that gave me the opportunity to test the responses of my requests without having to also create the front end, unlike flask or django.`
 
 LANGUAGE SELECTION:
 The main programming language i used for the assingment was Python as it is simple, with many healpfull libraries and also works great with fastAPI. More specifically, i load my packages for the project in python Virtual Machine so it can run in other machines as well, not have to deal with conflict due to updates and also reduse the disk storage.
