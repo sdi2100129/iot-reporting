@@ -13,3 +13,21 @@ DATABASE LANGUAGE:
 For the database implementation i used postgreSQL. Even if it would be easier for me to just use SQLite that doesn't need installation and connection with server unlike postgreSQL, all in all postegreSQL can handle more advanced queries and is a real production database. For easier develop i combine postgreSQL with SQLALchemy that can convert the python classes in the database tables making the queries easier to implement.
 
 
+
+
+# TO FIX
+- missing time field in SensorReading
+- consistency: 
+    - get sensors, get sensor/{sensorId} return objects,
+    - put sensor returns strings if db sensor but the error is a dictionary
+    - ->   make every response in JSON format
+
+- put and delete endpoint: sensorId is a query parameter while it should be in the path
+ 	/sensor/{sensorId}, to match the GET endpoint
+
+
+# TO DO
+- Add validation, write unit tests (pytest)
+- Write a complete README.md
+- Add a .gitignore
+- Add requirements.txt
