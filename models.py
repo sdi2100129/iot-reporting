@@ -26,10 +26,10 @@ class Sensor(BaseModel):
 class SensorReading(BaseModel):
     id: int = Field(..., gt=0)
     sensorId: int = Field(..., gt=0)
-    readingType: Literal["Temperature", "Humidity", "Acoustic"] = Field(...)
-    readingValue: float = Field(...)
-    readingDate: date = Field(...)
-    readingTime: time = Field(...)
+    readingType: Literal["Temperature", "Humidity", "Acoustic"]
+    readingValue: float 
+    readingDate: date 
+    readingTime: time 
     description: str
 
 

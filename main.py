@@ -193,13 +193,14 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
 
     existing = db.query(db_models.SensorReading).filter(db_models.SensorReading.id == reading.id).first()
     if existing:
-        raise HTTPException(status_code=400, detail="SensorReading with this ID already exists")
+        raise HTTPException(status_code=400, detail="Reading with this ID already exists")
     
     sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == reading.sensorId).first()
     if not sensor:
         raise HTTPException(status_code=404, detail="Sensor does not exist")
 
     db_reading = db_models.SensorReading(
+        id=reading.id,
         sensorId=reading.sensorId,
         readingType=reading.readingType,
         readingValue=reading.readingValue,
@@ -210,6 +211,7 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     db.commit()
     return {
         "message": "Reading added successfully",
+        "id" : reading.id,
         "sensorId": reading.sensorId,
         "readingType": reading.readingType,
         "readingValue": reading.readingValue,   

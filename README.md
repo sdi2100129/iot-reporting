@@ -28,7 +28,7 @@ Run tests with  PYTHONPATH=. pytest
 
 
 # TO DO
-- Add validation, write unit tests (pytest)
+- Add validation    CHECK   , write unit tests (pytest)
 - Write a complete README.md
 - Add a .gitignore      CHECK 
 - Add requirements.txt  CHECK
