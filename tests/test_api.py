@@ -71,6 +71,34 @@ def test_invalid_email(clean_db):
     assert response.json()["detail"][0]["loc"] == ["body", "vendorEmail"]
     assert "value is not a valid email address" in response.json()["detail"][0]["msg"]
 
+def test_invalid_vendor_name(clean_db):
+    payload = {
+        "sensorId": 102,
+        "type": "Humidity",
+        "vendorName": "Vendor123",
+        "vendorEmail": "vendor123@example.com",
+        "description": "Test",
+        "location": "Lab"
+    }
+
+    response = client.post("/sensor/", json=payload)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "vendorName"]
+
+
+def test_invalid_sensor_type(clean_db):
+    payload = {
+        "sensorId": 103,
+        "type": "InvalidType",
+        "vendorName": "ValidVendor",
+        "vendorEmail": "valid@example.com",
+        "description": "Test",
+        "location": "Lab"
+    }
+
+    response = client.post("/sensor/", json=payload)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "type"]
 
 
 #   Reading with wrong range
@@ -87,6 +115,40 @@ def test_temperature_out_of_range(clean_db):
 
     response = client.post("/reading/", json=payload)
     assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "readingValue"]
+
+
+def test_humidity_out_of_range(clean_db):
+    payload = {
+        "id": 2,
+        "sensorId": 100,
+        "readingType": "Humidity",
+        "readingValue": 150,
+        "readingDate": "2024-01-01",
+        "readingTime": "12:00:00",
+        "description": "Too humid"
+    }
+
+    response = client.post("/reading/", json=payload)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "readingValue"]
+
+
+def test_acoustic_out_of_range(clean_db):
+    payload = {
+        "id": 3,
+        "sensorId": 100,
+        "readingType": "Acoustic",
+        "readingValue": 300,
+        "readingDate": "2024-01-01",
+        "readingTime": "12:00:00",
+        "description": "Too loud"
+    }
+
+    response = client.post("/reading/", json=payload)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "readingValue"]  
+
 
 def test_future_reading_date(clean_db):
     payload = {
@@ -101,7 +163,7 @@ def test_future_reading_date(clean_db):
 
     response = client.post("/reading/", json=payload)
     assert response.status_code == 422
-    
+
     assert response.json()["detail"][0]["loc"] == ["body", "readingDate"]
     assert "readingDate cannot be in the future" in response.json()["detail"][0]["msg"]
 
