@@ -10,11 +10,11 @@ import re
 #   Python classes
 class Sensor(BaseModel):
     sensorId: int = Field(..., gt=0)  
-    type: Literal["Temperature", "Humidity", "Acoustic"]
-    vendorName: str
-    vendorEmail: EmailStr
+    type: Literal["Temperature", "Humidity", "Acoustic"] = Field(...)
+    vendorName: str = Field(...)
+    vendorEmail: EmailStr = Field(...)
     description: str
-    location: str
+    location: str = Field(...)
 
     @field_validator("vendorName")
     def validate_vendor_name(cls, v):
@@ -26,10 +26,10 @@ class Sensor(BaseModel):
 class SensorReading(BaseModel):
     id: int = Field(..., gt=0)
     sensorId: int = Field(..., gt=0)
-    readingType: Literal["Temperature", "Humidity", "Acoustic"]
-    readingValue: float
-    readingDate: date
-    readingTime: time
+    readingType: Literal["Temperature", "Humidity", "Acoustic"] = Field(...)
+    readingValue: float = Field(...)
+    readingDate: date = Field(...)
+    readingTime: time = Field(...)
     description: str
 
 

@@ -1,8 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, Date, Time
+from datetime import datetime, date, time
 from sqlalchemy import ForeignKey
-
-import datetime
+ 
 
 base = declarative_base()
 
@@ -11,11 +11,11 @@ class Sensor(base):
     __tablename__ = "sensors"
     
     sensorId = Column(Integer, primary_key=True, index=True)
-    type = Column(String, index=True)
-    vendorName = Column(String)
-    vendorEmail = Column(String)
+    type = Column(String, index=True, nullable=False)
+    vendorName = Column(String, nullable=False)
+    vendorEmail = Column(String, nullable=False)
     description = Column(String)
-    location = Column(String)   
+    location = Column(String, nullable=False)
 
 class SensorReading(base):
     __tablename__ = "sensor_readings"
@@ -24,7 +24,7 @@ class SensorReading(base):
     sensorId = Column(Integer, ForeignKey("sensors.sensorId"))
     readingType = Column(String, nullable=False)
     readingValue = Column(Float, nullable=False)
-    readingDate = Column(Date, default=datetime.date.today)
-    readingTime = Column(Time, default=datetime.datetime.now().time)
+    readingDate = Column(Date, default=date.today)
+    readingTime = Column(Time, default=lambda: datetime.now().time())
     description = Column(String, nullable=True)
     
