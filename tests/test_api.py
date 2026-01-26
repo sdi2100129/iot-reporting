@@ -1,3 +1,15 @@
+"""
+Integration tests for the IoT Reporting API.
+
+This test suite verifies:
+- Sensor creation and validation rules.
+- Reading creation and business constraints.
+- Schema-level validation enforced by Pydantic.
+- Proper HTTP status codes and error messages.
+
+All tests use a clean database state via fixtures.
+"""
+
 from fastapi.testclient import TestClient
 import pytest
 from database import SessionLocal
@@ -16,6 +28,13 @@ def test_root():
 
 @pytest.fixture
 def clean_db():
+    """
+    Provides a clean database state before each test.
+
+    Deletes all SensorReading and Sensor records to ensure
+    test isolation and deterministic results.
+    """
+
     db = SessionLocal()
     db.query(db_models.SensorReading).delete()
     db.query(db_models.Sensor).delete()
@@ -25,6 +44,11 @@ def clean_db():
 
 
 def test_create_sensor(clean_db):
+    """
+    Creating a sensor with a unique ID should succeed,
+    while creating a duplicate sensor should fail.
+    """
+
     sensor = {
         "sensorId": 1,
         "type": "Temperature",
@@ -56,6 +80,11 @@ def test_create_sensor(clean_db):
 
 
 def test_invalid_vendorEmail(clean_db):
+    """
+    Sensor creation should fail if vendorEmail is not a valid email address.
+    Valid does not confirm existing, only format.
+    """
+
     sensor = {
         "sensorId": 101,
         "type": "Temperature",
@@ -72,6 +101,10 @@ def test_invalid_vendorEmail(clean_db):
     assert "value is not a valid email address" in response.json()["detail"][0]["msg"]
 
 def test_invalid_vendorName(clean_db):
+    """
+    Sensor creation should fail if vendorName contains invalid characters.
+    """
+
     sensor = {
         "sensorId": 102,
         "type": "Humidity",
@@ -87,6 +120,10 @@ def test_invalid_vendorName(clean_db):
 
 
 def test_invalid_sensor_type(clean_db):
+    """
+    Sensor creation should fail if the sensor type is not one of the allowed values.
+    """
+
     sensor = {
         "sensorId": 103,
         "type": "InvalidType",
@@ -100,7 +137,12 @@ def test_invalid_sensor_type(clean_db):
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "type"]
 
+
 def test_missing_fields_sensor(clean_db):
+    """
+    Sensor creation should fail if required fields are missing.
+    """
+
     sensor = {
         "sensorId": 104,
         "vendorName": "SensorCo",
@@ -115,6 +157,11 @@ def test_missing_fields_sensor(clean_db):
 
 
 def test_create_reading(clean_db):
+    """
+    Creating a valid sensor reading should succeed.
+    Creating a reading with a duplicate ID should fail.
+    """
+
     sensor = {
         "sensorId": 100,
         "type": "Temperature",
@@ -154,6 +201,10 @@ def test_create_reading(clean_db):
 
 #   Reading with wrong range
 def test_temperature_out_of_range(clean_db):
+    """
+    Reading values must be within the valid range for the sensor type.
+    """
+
     reading = {
         "id": 1,
         "sensorId": 100,
@@ -170,6 +221,10 @@ def test_temperature_out_of_range(clean_db):
 
 
 def test_invalid_humidity(clean_db):
+    """
+    Humidity readings must be between 0 and 100.
+    """ 
+
     reading = {
         "id": 2,
         "sensorId": 100,
@@ -186,6 +241,10 @@ def test_invalid_humidity(clean_db):
 
 
 def test_invalid_acoustic(clean_db):
+    """
+    Acoustic readings must be between 0 and 200.
+    """
+
     reading = {
         "id": 3,
         "sensorId": 100,
@@ -202,6 +261,10 @@ def test_invalid_acoustic(clean_db):
 
 
 def test_future_readingDate(clean_db):
+    """
+    Reading dates must not be in the future.
+    """
+    
     payload = {
         "id": 1,
         "sensorId": 100,
@@ -221,14 +284,9 @@ def test_future_readingDate(clean_db):
 
 
 def test_get_nonexistent_sensor(clean_db):
-    sensor = {
-        "sensorId": 11,
-        "type": "Temperature",
-        "vendorName": "SensorCo",
-        "vendorEmail": "SensorCo@example.com",
-        "description": "Outdoor temperature sensor",
-        "location": "Rooftop"
-    }
+    """
+    Test that retrieving a non-existent sensor returns a 404 error.
+    """
 
     reading = {
         "id": 18,
@@ -240,13 +298,17 @@ def test_get_nonexistent_sensor(clean_db):
         "description": "Morning reading"
     }
 
-    client.post("/sensor/", json=sensor)
     response = client.post("/reading/", json=reading)
     assert response.status_code == 404
     assert response.json() == {"detail": "Sensor does not exist"}
 
 
 def test_invalid_reading_type(clean_db):
+    """
+    Test that creating a reading with an invalid readingType fails schema validation.
+    readingType should be a string, not an integer.
+    """
+
     sensor = {
         "sensorId": 1,
         "type": "Temperature",
