@@ -29,5 +29,5 @@ For the database implementation i used postgreSQL. Even if it would be easier fo
 # TO DO
 - Add validation, write unit tests (pytest)
 - Write a complete README.md
-- Add a .gitignore  
-- Add requirements.txt
+- Add a .gitignore      CHECK 
+- Add requirements.txt  CHECK

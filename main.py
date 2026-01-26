@@ -23,13 +23,19 @@ app = FastAPI()
 
 from sqlalchemy import text
 
-def reset_db():
-    db = session()
-    db.execute(text("DROP SCHEMA public CASCADE;"))
-    db.execute(text("CREATE SCHEMA public;"))
-    db.commit()
-    db.close()
-reset_db()
+#def reset_db():
+#    """
+#    Drops and recreates the public schema of the database.
+#    This effectively deletes all tables and data and resets the database.
+#    Used only for development/testing.
+#    """
+#
+#    db = session()
+#    db.execute(text("DROP SCHEMA public CASCADE;"))
+#    db.execute(text("CREATE SCHEMA public;"))
+#    db.commit()
+#    db.close()
+#reset_db()
 
 
 #   Convert the classes into tables
@@ -37,6 +43,12 @@ db_models.base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def greet():
+    """
+    Root endpoint to test if the API is running.
+    Returns:
+        dict: Simple greeting message.
+    """
+        
     return {"Hello": "World"}
 
 #   Sample data
@@ -49,8 +61,13 @@ Sensors =  [
     Sensor(sensorId=6, type="Acoustic", vendorName="SoundWave", vendorEmail="soundwave@example.com", description="Acoustic sensor in the conference room", location="Conference Room")
 ]
 
-#   Initialize the sensors database with the sample data
+
 def init_db():
+    """
+    Initializes the database with sample sensor data.
+    Data is inserted only if the sensors table is empty.
+    """
+        
     db = session()
 
     count = db.query(db_models.Sensor).count()
@@ -70,9 +87,13 @@ def init_db():
 
 init_db()
 
-#   Every time we need to interact/connect with the database we create a new session
-#   that we will close after the interaction
+
 def get_db():
+    """
+    Dependency that provides a database session every time we need to interact/connect with it.
+    Ensures the session is properly closed after each request.
+    """
+        
     db = session() 
     try:    
         yield db 
@@ -82,6 +103,10 @@ def get_db():
 
 @app.get("/sensors/")
 def get_sensors(db : Session = Depends(get_db)):
+    """
+    Returns all sensors stored in the database.
+    """
+
     db_sensors = db.query(db_models.Sensor).all()
     return {
         "success": True,
@@ -91,6 +116,10 @@ def get_sensors(db : Session = Depends(get_db)):
 
 @app.get("/sensor/{sensorId}")
 def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
+    """
+    Returns a sensor by its ID.
+    """
+
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if db_sensor :
         return {
@@ -106,6 +135,10 @@ def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
 
 @app.get("/readings/")
 def get_readings(db : Session = Depends(get_db)):
+    """
+    Returns all sensor readings.
+    """
+
     db_readings = db.query(db_models.SensorReading).all()
     return {
         "success": True,
@@ -116,6 +149,15 @@ def get_readings(db : Session = Depends(get_db)):
 
 @app.post("/sensor/")
 def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
+    """
+    Adds a new sensor to the database with the provided details.
+    If a sensor with the same sensorId already exists, returns an error.
+    """
+
+    existing = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensor.sensorId).first()
+    if existing:
+        return {"error": "Sensor with this ID already exists"}
+
     db_sensor = db_models.Sensor(
         sensorId=sensor.sensorId,
         type=sensor.type,
@@ -139,6 +181,20 @@ def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
 
 @app.post("/reading/")
 def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
+    """
+    Adds a new sensor reading to the database with the provided details.
+    If a reading with the same id already exists, returns an error.
+    Also checks if the associated sensor exists; if not, returns an error.
+    """
+
+    existing = db.query(db_models.SensorReading).filter(db_models.SensorReading.id == reading.id).first()
+    if not existing:
+        return {"error": "SensorReading with this ID already exists"}
+    
+    sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == reading.sensorId).first()
+    if not sensor:
+        return {"error": "Sensor does not exist"}
+
     db_reading = db_models.SensorReading(
         sensorId=reading.sensorId,
         readingType=reading.readingType,
@@ -161,6 +217,11 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
 
 @app.delete("/reading/{readingId}")
 def delete_reading(readingId: int, db : Session = Depends(get_db)):
+    """
+    Deletes a sensor reading by its ID.
+    If the reading does not exist, returns an error.
+    """
+
     db_reading = db.query(db_models.SensorReading).filter(db_models.SensorReading.id == readingId).first()
     if db_reading:
         db.delete(db_reading)
@@ -182,6 +243,11 @@ def delete_reading(readingId: int, db : Session = Depends(get_db)):
 
 @app.put("/sensor/{sensorId}")
 def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(get_db)):
+    """
+    Updates an existing sensor's details with the new provided values using the provided sensorId.
+    If the sensor does not exist, returns an error.
+    """
+
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if db_sensor:
         db_sensor.type = updated_sensor.type
@@ -205,6 +271,11 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
 
 @app.delete("/sensor/{sensorId}")
 def delete_sensor(sensorId: int, db : Session = Depends(get_db)):
+    """
+    Deletes a sensor by its ID.
+    If the sensor does not exist, returns an error.
+    """
+
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if db_sensor:
         db.delete(db_sensor)
@@ -230,6 +301,15 @@ def search_readings(
     page: int = 1,
     db: Session = Depends(get_db)
 ):
+    """
+    Searches for sensor readings based on optional filters: sensor type, location, and time.
+    Supports pagination with a default page size of 10.
+    1. sensor_type: Filter readings by the type of sensor (e.g., Temperature, Humidity).
+    2. location: Filter readings by the location of the sensor (e.g., Main Hall, Lobby).
+    3. time: Filter readings recorded after the specified time.
+    4. page: Specify the page number for pagination (default is 1).
+    Returns a paginated list of sensor readings matching the filters.
+    """
     
     query = db.query(db_models.SensorReading).join(
         db_models.Sensor,
@@ -262,6 +342,14 @@ def readings_metrics(
     time: time = None,
     db: Session = Depends(get_db)
 ):
+    """
+    Computes metrics on sensor readings based on optional filters: sensor type, location, and time.
+    1. sensor_type: Filter readings by the type of sensor (e.g., Temperature, Acoustic, Humidity).
+    2. location: Filter readings by the location of the sensor (e.g., Main Hall, Lobby).
+    3. time: Filter readings recorded after the specified time.
+    Returns metrics including count, range (min and max), mean, top 10 maximum, and top 10 minimum reading values.  
+    """
+
     query = db.query(db_models.SensorReading).join(
         db_models.Sensor,
         db_models.Sensor.sensorId == db_models.SensorReading.sensorId
