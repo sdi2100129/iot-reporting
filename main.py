@@ -1,9 +1,11 @@
 from fastapi import Depends, FastAPI
 from models import Sensor, SensorReading
-from database import session, engine
+from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 import db_models
 from datetime import date, time
+from fastapi import HTTPException
+
 
 app = FastAPI()
 
@@ -30,7 +32,7 @@ from sqlalchemy import text
 #    Used only for development/testing.
 #    """
 #
-#    db = session()
+#    db = SessionLocal()
 #    db.execute(text("DROP SCHEMA public CASCADE;"))
 #    db.execute(text("CREATE SCHEMA public;"))
 #    db.commit()
@@ -67,8 +69,8 @@ def init_db():
     Initializes the database with sample sensor data.
     Data is inserted only if the sensors table is empty.
     """
-        
-    db = session()
+
+    db = SessionLocal()
 
     count = db.query(db_models.Sensor).count()
     if count == 0:
@@ -93,8 +95,8 @@ def get_db():
     Dependency that provides a database session every time we need to interact/connect with it.
     Ensures the session is properly closed after each request.
     """
-        
-    db = session() 
+
+    db = SessionLocal() 
     try:    
         yield db 
     finally:
@@ -131,7 +133,9 @@ def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
             "description": db_sensor.description,
             "location": db_sensor.location
         }
-    return {"error": "Sensor not found"}
+    
+    raise HTTPException(status_code=404, detail="Sensor not found")
+
 
 @app.get("/readings/")
 def get_readings(db : Session = Depends(get_db)):
@@ -156,7 +160,7 @@ def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
 
     existing = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensor.sensorId).first()
     if existing:
-        return {"error": "Sensor with this ID already exists"}
+        raise HTTPException(status_code=400, detail="Sensor with this ID already exists")   
 
     db_sensor = db_models.Sensor(
         sensorId=sensor.sensorId,
@@ -188,12 +192,12 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     """
 
     existing = db.query(db_models.SensorReading).filter(db_models.SensorReading.id == reading.id).first()
-    if not existing:
-        return {"error": "SensorReading with this ID already exists"}
+    if existing:
+        raise HTTPException(status_code=400, detail="SensorReading with this ID already exists")
     
     sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == reading.sensorId).first()
     if not sensor:
-        return {"error": "Sensor does not exist"}
+        raise HTTPException(status_code=404, detail="Sensor does not exist")
 
     db_reading = db_models.SensorReading(
         sensorId=reading.sensorId,
@@ -238,7 +242,7 @@ def delete_reading(readingId: int, db : Session = Depends(get_db)):
 
         }  
           
-    return {"error": "Reading not found"}
+    raise HTTPException(status_code=404, detail="Reading not found")
 
 
 @app.put("/sensor/{sensorId}")
@@ -266,7 +270,7 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
             "location": db_sensor.location
         }
     
-    return {"error": "Sensor not found"}
+    raise HTTPException(status_code=404, detail="Sensor not found")
 
 
 @app.delete("/sensor/{sensorId}")
@@ -290,7 +294,7 @@ def delete_sensor(sensorId: int, db : Session = Depends(get_db)):
             "location": db_sensor.location
         }
     
-    return {"error": "Sensor not found"}
+    raise HTTPException(status_code=404, detail="Sensor not found") 
 
 
 @app.get("/readings/search")
@@ -369,7 +373,7 @@ def readings_metrics(
     values = [r.readingValue for r in query.all()]
 
     if not values:
-        return {"error": "No readings found"}
+        raise HTTPException(status_code=404, detail="No readings found")
 
     values_sorted = sorted(values)
 

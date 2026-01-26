@@ -1,4 +1,7 @@
 from fastapi.testclient import TestClient
+import pytest
+from database import SessionLocal
+import db_models
 from main import app
 
 #   Create a fake server in memory.
@@ -11,7 +14,17 @@ def test_root():
     assert response.json() == {"Hello": "World"}
 
 
-def test_create_sensor():
+@pytest.fixture
+def clean_db():
+    db = SessionLocal()
+    db.query(db_models.Sensor).delete()
+    db.query(db_models.SensorReading).delete()
+    db.commit()
+    db.close()
+    yield
+
+
+def test_create_sensor(clean_db):
     sensor_data = {
         "sensorId": 1,
         "type": "Temperature",
@@ -20,12 +33,29 @@ def test_create_sensor():
         "description": "Outdoor temperature sensor",
         "location": "Rooftop"
     }
-    response = client.post("/sensors/", json=sensor_data)
+    response = client.post("/sensor/", json=sensor_data)
+
+    expected_response = {
+        "message": "Sensor added successfully",
+        "sensorId": 1,
+        "sensorType": "Temperature",
+        "vendorName": "SensorCo",
+        "vendorEmail": "SensorCo@example.com",
+        "description": "Outdoor temperature sensor",
+        "location": "Rooftop"
+    }
     assert response.status_code == 200
-    assert response.json() == sensor_data   
+    assert response.json() == expected_response  
+
+    # Try to add the same sensor again
+    response2 = client.post("/sensor/", json=sensor_data)
+
+    # Expect a 400 error for duplicate
+    assert response2.status_code == 400
+    assert response2.json() == {"detail": "Sensor with this ID already exists"}
 
 
-def test_invalid_email():
+def test_invalid_email(clean_db):
     payload = {
         "sensorId": 101,
         "type": "Temperature",
@@ -37,11 +67,16 @@ def test_invalid_email():
 
     response = client.post("/sensor/", json=payload)
     assert response.status_code == 422
+    
+    assert response.json()["detail"][0]["loc"] == ["body", "vendorEmail"]
+    assert "value is not a valid email address" in response.json()["detail"][0]["msg"]
+
 
 
 #   Reading with wrong range
-def test_temperature_out_of_range():
+def test_temperature_out_of_range(clean_db):
     payload = {
+        "id": 1,
         "sensorId": 100,
         "readingType": "Temperature",
         "readingValue": 500,
@@ -52,4 +87,21 @@ def test_temperature_out_of_range():
 
     response = client.post("/reading/", json=payload)
     assert response.status_code == 422
+
+def test_future_reading_date(clean_db):
+    payload = {
+        "id": 1,
+        "sensorId": 100,
+        "readingType": "Humidity",
+        "readingValue": 50,
+        "readingDate": "2100-01-01",
+        "readingTime": "12:00:00",
+        "description": "Future date"
+    }
+
+    response = client.post("/reading/", json=payload)
+    assert response.status_code == 422
+    
+    assert response.json()["detail"][0]["loc"] == ["body", "readingDate"]
+    assert "readingDate cannot be in the future" in response.json()["detail"][0]["msg"]
 

@@ -13,6 +13,7 @@ DATABASE LANGUAGE:
 For the database implementation i used postgreSQL. Even if it would be easier for me to just use SQLite that doesn't need installation and connection with server unlike postgreSQL, all in all postegreSQL can handle more advanced queries and is a real production database. For easier develop i combine postgreSQL with SQLALchemy that can convert the python classes in the database tables making the queries easier to implement.
 
 
+Run tests with  PYTHONPATH=. pytest
 
 
 # TO FIX

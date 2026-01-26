@@ -16,4 +16,4 @@ db_url = (
 engine = create_engine(db_url)
 
 #   Define the database we want to connect with
-session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
