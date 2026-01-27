@@ -29,7 +29,7 @@ def reset_db():
     """
     Drops and recreates the public schema of the database.
     This effectively deletes all tables and data and resets the database.
-   Used only for development/testing.
+    Used only for development/testing.
     """
 
     db = SessionLocal()
@@ -202,14 +202,28 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     if sensor.type != reading.readingType:
         raise HTTPException(status_code=422, detail="Reading type does not match sensor type")
 
+    existing = db.query(db_models.SensorReading).filter(
+    db_models.SensorReading.sensorId == reading.sensorId, 
+    db_models.SensorReading.readingDate == reading.readingDate,
+    db_models.SensorReading.readingTime == reading.readingTime
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Reading for this sensor at this time already exists"
+        )
+
+    
     db_reading = db_models.SensorReading(
         id=reading.id,
         sensorId=reading.sensorId,
         readingType=reading.readingType,
         readingValue=reading.readingValue,
         readingDate=reading.readingDate,
-        description=reading.description
+        description=reading.description,
+        readingTime=reading.readingTime
     )
+
     db.add(db_reading)
     db.commit()
     return {
