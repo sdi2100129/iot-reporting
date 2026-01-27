@@ -302,6 +302,36 @@ def test_get_nonexistent_sensor(clean_db):
     assert response.status_code == 404
     assert response.json() == {"detail": "Sensor does not exist"}
 
+def test_mismatched_reading_type(clean_db):
+    """
+    Test that creating a reading with a readingType that does not match
+    the sensor's type fails with a 422 error.
+    """
+
+    sensor = {
+        "sensorId": 1,
+        "type": "Temperature",
+        "vendorName": "SensorCo",
+        "vendorEmail": "sensor@example.com",
+        "description": "Test sensor",
+        "location": "Lab"
+    }
+    client.post("/sensor/", json=sensor)
+
+    reading = {
+        "id": 1,
+        "sensorId": 1,
+        "readingType": "Humidity",
+        "readingValue": 50,
+        "readingDate": "2024-01-01",
+        "readingTime": "12:00:00",
+        "description": "Mismatched type"
+    }
+
+    response = client.post("/reading/", json=reading)
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Reading type does not match sensor type"}
+
 
 def test_invalid_reading_type(clean_db):
     """

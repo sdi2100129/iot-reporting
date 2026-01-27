@@ -25,19 +25,19 @@ app = FastAPI()
 
 from sqlalchemy import text
 
-#def reset_db():
-#    """
-#    Drops and recreates the public schema of the database.
-#    This effectively deletes all tables and data and resets the database.
-#    Used only for development/testing.
-#    """
-#
-#    db = SessionLocal()
-#    db.execute(text("DROP SCHEMA public CASCADE;"))
-#    db.execute(text("CREATE SCHEMA public;"))
-#    db.commit()
-#    db.close()
-#reset_db()
+def reset_db():
+    """
+    Drops and recreates the public schema of the database.
+    This effectively deletes all tables and data and resets the database.
+   Used only for development/testing.
+    """
+
+    db = SessionLocal()
+    db.execute(text("DROP SCHEMA public CASCADE;"))
+    db.execute(text("CREATE SCHEMA public;"))
+    db.commit()
+    db.close()
+reset_db()
 
 
 #   Convert the classes into tables
@@ -198,6 +198,9 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == reading.sensorId).first()
     if not sensor:
         raise HTTPException(status_code=404, detail="Sensor does not exist")
+    
+    if sensor.type != reading.readingType:
+        raise HTTPException(status_code=422, detail="Reading type does not match sensor type")
 
     db_reading = db_models.SensorReading(
         id=reading.id,
