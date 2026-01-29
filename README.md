@@ -1,6 +1,6 @@
 # iot-reporting-api
 
-A RESTful API built with FastAPI for managing sensors and their readings,
+A full-stack system for managing Sensors and Readings in an IoT environment,
 including filtering, metrics, and CRUD(Create, Read, Update, Deleete) operations.
 In fastAPI Create is done with POST request, Read is done with GET request, Update is done with PUT request and Delete with DELETE request.
 
@@ -14,18 +14,33 @@ In fastAPI Create is done with POST request, Read is done with GET request, Upda
 
 
 # Project structure
-.
-├── main.py            # FastAPI app and routes
-├── models.py          # Pydantic schemas
-├── db_models.py       # SQLAlchemy models
-├── database.py        # DB connection and session
-└── requirements.txt
+│
+├── backend/
+│   ├── main.py
+│   ├── models.py
+│   ├── db_models.py
+│   ├── database.py
+│   └── ...
+│
+└── frontend/
+    ├── src/
+    │   ├── api.js
+    │   ├── components/
+    │   │   ├── Sensors/
+    │   │   │   ├── Sensors.jsx
+    │   │   │   ├── SensorForm.jsx
+    │   │   │   └── SensorList.jsx
+    │   │   └── Readings/
+    │   │       ├── Readings.jsx
+    │   │       ├── ReadingForm.jsx
+    │   │       └── ReadingList.jsx
+    │   └── main.jsx
+
 
 
 # Installation
 
 1. Clone the repository:
-```bash
 git clone https://github.com/aorfanoudaki/iot-reporting-api.git
 cd sensor-api
 
@@ -36,17 +51,32 @@ source venv/bin/activate
 3. Install dependencies:
 pip install -r requirements.txt
 
-4. Run:
+
+#   To run back end
+
 uvicorn main:app --reload
 
-#   API Documentation
 Once running, open:
+Swagger UI: http://127.0.0.1:8000/docs 
 
-- Swagger UI: http://127.0.0.1:8000/docs 
 
+#   To run tests
 
-#   Run tests with 
 PYTHONPATH=. pytest
+
+
+#   To run frontend
+
+1. cd frontend
+
+2. npm install
+
+3. npm run dev
+
+Once running, open:
+React UI: http://localhost:5173
+
+
 
 
 #  How to implement each request and what to expect in various cases
@@ -62,7 +92,19 @@ PYTHONPATH=. pytest
 - add_reading : expects a reading insert by the user (including id, the sensor's id, the reading's type, the value it measure, the date the measurement took place and the ). A message "Reading with this ID already exists" if the id is already used by an other reading saved in the database and so the user should type a different 
 
 
+# UI is split in
 
+1. Container components
+    - Sensors.jsx
+    - Readings.jsx
+
+2.  UI components
+    - SensorForm.jsx
+    - SensorList.jsx
+    - ReadingForm.jsx
+    - ReadingList.jsx
+
+Τα API calls βρίσκονται μόνο στα container components.
 
 
 WEB-FRAMEWORK SELECTION:
@@ -71,8 +113,11 @@ For the implementation of REST API, I chose fastAPI for web framework, because -
 LANGUAGE SELECTION:
 The main programming language i used for the assingment was Python as it is simple, with many healpfull libraries and also works great with fastAPI. More specifically, i load my packages for the project in python Virtual Machine so it can run in other machines as well, not have to deal with conflict due to updates and also reduse the disk storage.
 
+DATABASE LANGUAGE:
+For the database implementation i used postgreSQL. Even if it would be easier for me to just use SQLite that doesn't need installation and connection with server unlike postgreSQL, all in all postegreSQL can handle more advanced queries and is a real production database. For easier develop i combine postgreSQL with SQLALchemy that can convert the python classes in the database tables making the queries easier to implement.
+
 OS SELECTION:
 I run the project in Linux using WSL for compatibility with other machines and better performance.
 
-DATABASE LANGUAGE:
-For the database implementation i used postgreSQL. Even if it would be easier for me to just use SQLite that doesn't need installation and connection with server unlike postgreSQL, all in all postegreSQL can handle more advanced queries and is a real production database. For easier develop i combine postgreSQL with SQLALchemy that can convert the python classes in the database tables making the queries easier to implement.
+FRONT END SELECTION:
+The front end is implemented by React + Vite using the Axios package.

@@ -13,13 +13,12 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
 
   return (
     <div>
-      <h3>Add / Update Readings</h3>
+      <h3>Add Readings</h3>
       {newReadings.map((reading, index) => (
-        <div key={index} style={{ marginBottom: "1rem" }}>
+        <div key={index}>
           {fields.map((field) => (
             <input key={field} placeholder={field} value={reading[field]}
               onChange={(e) => handleInputChange(index, field, e.target.value)}
-              style={{ marginRight: "0.5rem", marginBottom: "0.3rem" }}
             />
           ))}
           <br />
