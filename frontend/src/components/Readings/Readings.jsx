@@ -1,13 +1,28 @@
 import { useEffect, useState } from "react";
 import ReadingForm from "./ReadingForm.jsx";
 import ReadingList from "./ReadingList.jsx";
+import ReadingSearch from "./ReadingSearch.jsx";
 import api from "../../api";
 
 export default function Readings() {
     const [readings, setReadings] = useState([]);
     const [newReadings, setNewReadings] = useState([
-        { id: "", sensorId: "", readingType: "", readingValue: "", readingDate: "", readingTime: "", description: "" }
+        { id: "", 
+        sensorId: "",
+        readingType: "",
+        readingValue: "",
+        readingDate: "",
+        readingTime: "",
+        description: "" }
     ]);
+
+    const [searchFilters, setSearchFilters] = useState({
+        sensor_type: "",
+        location: "",
+        time: "",
+        page: 1
+    });
+
 
 
     const fetchReadings = async () => {
@@ -58,6 +73,22 @@ export default function Readings() {
 
     // ---------------- search  ----------------
 
+    const searchReadings = async () => {
+        try {
+            const res = await api.get("/readings/search", {
+            params: {
+                sensor_type: searchFilters.sensor_type || undefined,
+                location: searchFilters.location || undefined,
+                time: searchFilters.time || undefined,
+                page: searchFilters.page
+            }
+            });
+
+            setReadings(res.data.data);
+        } catch (err) {
+            alert(err.response?.data?.detail || "Search failed");
+        }
+    };
 
 
     // ---------------- UI  ----------------
@@ -72,6 +103,12 @@ export default function Readings() {
         />
 
         <hr />
+
+        <ReadingSearch
+        filters={searchFilters}
+        setFilters={setSearchFilters}
+        onSearch={searchReadings}
+        />
 
         <ReadingList readings={readings} deleteReading={deleteReading} />
         </div>

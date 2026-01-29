@@ -34,6 +34,8 @@ In fastAPI Create is done with POST request, Read is done with GET request, Upda
     │   │       ├── Readings.jsx
     │   │       ├── ReadingForm.jsx
     │   │       └── ReadingList.jsx
+    │   │       └── ReadingSearch.jsx
+    │   │       └── ReadingMetrics.jsx
     │   └── main.jsx
 
 
