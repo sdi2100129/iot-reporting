@@ -78,18 +78,57 @@ React UI: http://localhost:5173
 
 
 
-
 #  How to implement each request and what to expect in various cases
 
-- get_sensors : does not need any parameter and will return all the sensors in the database
+- get_sensors : does not need any parameter and will return all the sensors in the database in JSON format like below:
 
-- get_sensor_by_id : user inserts an integer which represent the sensor id he is looking for and the execution will return the data stored for this sensor.
+
+- get_sensor_by_id : user inserts an integer which represent the sensor id he is looking for and the execution will return the data stored for this sensor in JSON format like below:
+    {
+    "sensorId": 1,
+    "type": "Temperature",
+    "vendorName": "Bosch",
+    "vendorEmail": "bosch@sensors.com",
+    "description": "Temperature sensor",
+    "location": "Room A"
+    }
+
 
 - get_readings : does not need any parameter and will return all the readings in the database or a message Sensor not found if there isn't a sensor with this id in the database. 
 
-- add_sensor : user gives sensor data (id, type, vendor's name, vendor's email, a description and the sensor's location). A message saying "Sensor added successfully" will appear if the task was done or "Sensor with this ID already exists" if sensor with this ID already exists in the database.
 
-- add_reading : expects a reading insert by the user (including id, the sensor's id, the reading's type, the value it measure, the date the measurement took place and the ). A message "Reading with this ID already exists" if the id is already used by an other reading saved in the database and so the user should type a different 
+- add_sensor : user gives sensor data (id, type, vendor's name, vendor's email, a description and    the sensor's location).
+    {
+    "sensorId": 1,
+    "type": "Temperature",
+    "vendorName": "Bosch",
+    "vendorEmail": "bosch@sensors.com",
+    "description": "Main sensor",
+    "location": "Room A"
+    }
+    A message saying "Sensor added successfully" will appear if the task was done or "Sensor with this ID already exists" if sensor with this ID already exists in the database.
+    {
+    "message": "Sensor added successfully"
+    }
+
+
+
+- add_reading : expects a reading insert by the user (including id, the sensor's id, the reading's type, the value it measure, the date the measurement took place and the ). 
+    {
+    "id": 1,
+    "sensorId": 1,
+    "readingType": "Temperature",
+    "readingValue": 23.5,
+    "readingDate": "2025-02-12",
+    "readingTime": "14:32:00",
+    "description": "Normal temperature"
+    }
+
+    A message "Reading with this ID already exists" if the id is already used by an other reading saved in the database and so the user should type a different one.
+    {
+    "message": "Reading added successfully"
+    }
+
 
 
 # UI is split in
@@ -119,5 +158,6 @@ For the database implementation i used postgreSQL. Even if it would be easier fo
 OS SELECTION:
 I run the project in Linux using WSL for compatibility with other machines and better performance.
 
+Re-render όταν αλλάζουν δεδομένα
 FRONT END SELECTION:
-The front end is implemented by React + Vite using the Axios package.
+The front end is implemented by React + Vite. Because React give you tools like useState hook to keep sensors and readings, useEffect hook to fetch data from the API and components. Without those tools the implementation would had to be manual.Also used with Axios for HTTP client that works very good with API projects as it auto-parses JSON format and provides error handling.
