@@ -9,18 +9,22 @@ from fastapi import HTTPException
 
 app = FastAPI()
 
-#from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 #   Adding cors headers to allow sharing resources between applications
-#origins = ["http://localhost:3000"]
+origins = [
+    "http://localhost:3000",
+    "http://localhost:5173"
+]
 
-#app.add_middleware(
-#    CORSMiddleware,
-#    allow_origins=origins,
-#    allow_credentials=True,
-#    allow_methods=["*"],
-#    allow_headers=["*"],
-#)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 from sqlalchemy import text
@@ -103,7 +107,7 @@ def get_db():
         db.close() 
 
 
-@app.get("/sensors/")
+@app.get("/sensors")
 def get_sensors(db : Session = Depends(get_db)):
     """
     Returns all sensors stored in the database.
@@ -116,7 +120,7 @@ def get_sensors(db : Session = Depends(get_db)):
         "data": db_sensors
     }
 
-@app.get("/sensor/{sensorId}")
+@app.get("/sensors/{sensorId}")
 def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
     """
     Returns a sensor by its ID.
@@ -137,7 +141,7 @@ def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Sensor not found")
 
 
-@app.get("/readings/")
+@app.get("/readings")
 def get_readings(db : Session = Depends(get_db)):
     """
     Returns all sensor readings.
@@ -151,7 +155,7 @@ def get_readings(db : Session = Depends(get_db)):
     }
      
 
-@app.post("/sensor/")
+@app.post("/sensors")
 def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
     """
     Adds a new sensor to the database with the provided details.
@@ -183,7 +187,7 @@ def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
     }
 
 
-@app.post("/reading/")
+@app.post("/readings")
 def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     """
     Adds a new sensor reading to the database with the provided details.
@@ -238,7 +242,7 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
     }
 
 
-@app.delete("/reading/{readingId}")
+@app.delete("/readings/{readingId}")
 def delete_reading(readingId: int, db : Session = Depends(get_db)):
     """
     Deletes a sensor reading by its ID.
@@ -264,7 +268,7 @@ def delete_reading(readingId: int, db : Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Reading not found")
 
 
-@app.put("/sensor/{sensorId}")
+@app.put("/sensors/{sensorId}")
 def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(get_db)):
     """
     Updates an existing sensor's details with the new provided values using the provided sensorId.
@@ -292,7 +296,7 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
     raise HTTPException(status_code=404, detail="Sensor not found")
 
 
-@app.delete("/sensor/{sensorId}")
+@app.delete("/sensors/{sensorId}")
 def delete_sensor(sensorId: int, db : Session = Depends(get_db)):
     """
     Deletes a sensor by its ID.
@@ -346,7 +350,7 @@ def search_readings(
         query = query.filter(db_models.Sensor.location == location)
 
     if time:
-        query = query.filter(db_models.SensorReading.readingDate >= time)
+        query = query.filter(db_models.SensorReading.readingTime >= time)
 
     page_size = 10
     results = query.offset((page - 1) * page_size).limit(page_size).all()
@@ -385,7 +389,7 @@ def readings_metrics(
         query = query.filter(db_models.Sensor.location == location)
 
     if time:
-        query = query.filter(db_models.SensorReading.readingDate >= time)
+        query = query.filter(db_models.SensorReading.readingTime >= time)
 
 
     #   4. Metrics on readingValue of the results
