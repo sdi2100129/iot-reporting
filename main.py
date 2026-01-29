@@ -129,7 +129,7 @@ def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if db_sensor :
         return {
-            "message": "Sensor updated successfully",
+            "message": "Sensor retrieved successfully",
             "sensorId": db_sensor.sensorId,
             "sensorType": db_sensor.type,
             "vendorName": db_sensor.vendorName,

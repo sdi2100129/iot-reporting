@@ -4,7 +4,7 @@ import api from "./api.jsx"
 import "./App.css"
 import Home from "./components/Home.jsx"
 import NavBar from "./components/NavBar.jsx"
-import Sensors from "./components/Sensors.jsx"
+import Sensors from "./components/Sensors/Sensors.jsx"
 import Readings from "./components/Readings.jsx"  
 import {BrowserRouter as Router, Route, Routes, Link} from "react-router-dom"
 
