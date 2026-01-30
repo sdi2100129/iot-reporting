@@ -23,6 +23,8 @@ export default function Readings() {
         page: 1
     });
 
+    const [filteredReadings, setFilteredReadings] = useState(null);
+
 
 
     const fetchReadings = async () => {
@@ -84,11 +86,16 @@ export default function Readings() {
             }
             });
 
-            setReadings(res.data.data);
+            setFilteredReadings(res.data.data);
         } catch (err) {
             alert(err.response?.data?.detail || "Search failed");
         }
     };
+
+    const clearSearch = () => {
+    setFilteredReadings(null);
+    };
+
 
 
     // ---------------- UI  ----------------
@@ -108,9 +115,10 @@ export default function Readings() {
         filters={searchFilters}
         setFilters={setSearchFilters}
         onSearch={searchReadings}
+        onClear={clearSearch}
         />
 
-        <ReadingList readings={readings} deleteReading={deleteReading} />
+        <ReadingList readings={filteredReadings ?? readings} deleteReading={deleteReading} />
         </div>
     );
 
