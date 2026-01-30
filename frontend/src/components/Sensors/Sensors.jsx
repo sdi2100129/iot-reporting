@@ -11,7 +11,7 @@ export default function Sensors() {
   }])
 
 
-  // ---------------- FETCH ALL  ----------------
+  // FETCH ALL  
   const fetchSensors = async () => {
     try {
       const response = await api.get("/sensors")
@@ -25,7 +25,7 @@ export default function Sensors() {
   useEffect(() => { fetchSensors() }, [])
 
 
-  // ---------------- ADD  ----------------
+  // ADD 
   const addSensor = async (sensor) => {
     try {
       const res = await api.post("/sensors", {
@@ -45,7 +45,7 @@ export default function Sensors() {
     }
   }
 
-  // ---------------- UPDATE  ----------------
+  // UPDATE 
   const updateSensor = async (sensor) => {
     try {
       const res = await api.put(`/sensors/${sensor.sensorId}`, {
@@ -66,7 +66,7 @@ export default function Sensors() {
   }
 
 
-  // ---------------- DELETE  ----------------
+  // DELETE  
   const deleteSensor = async (id) => { 
         try {
       await api.delete(`/sensors/${id}`)

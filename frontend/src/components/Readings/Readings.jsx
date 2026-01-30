@@ -38,7 +38,7 @@ export default function Readings() {
 
     useEffect(() => { fetchReadings() }, []);
 
-    // ---------------- ADD  ----------------
+    // ADD 
     const addReading = async (reading) => {
         try {
             const res = await api.post("/readings", {
@@ -59,7 +59,7 @@ export default function Readings() {
         }
     };
 
-    // ---------------- delete  ----------------
+    // delete 
     const deleteReading = async (readingId) => {
         try {
             const res = await api.delete(`/readings/${readingId}`);
@@ -73,7 +73,7 @@ export default function Readings() {
     };
 
 
-    // ---------------- search  ----------------
+    // search
 
     const searchReadings = async () => {
         try {
@@ -98,7 +98,7 @@ export default function Readings() {
 
 
 
-    // ---------------- UI  ----------------
+    // UI  -
     return (
         <div>
         <h2>Sensor Readings</h2>
