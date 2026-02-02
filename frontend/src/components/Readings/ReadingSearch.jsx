@@ -1,7 +1,6 @@
 export default function ReadingSearch({ filters, setFilters, onSearch, onClear }) {
   return (
     <div>
-      <h3>Search Readings</h3>
 
       <select
         value={filters.sensor_type}

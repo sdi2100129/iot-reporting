@@ -101,7 +101,16 @@ export default function Readings() {
     // UI  -
     return (
         <div>
-        <h2>Sensor Readings</h2>
+        <h1 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
+            Sensor Readings
+        </h1>
+
+        <ReadingSearch
+        filters={searchFilters}
+        setFilters={setSearchFilters}
+        onSearch={searchReadings}
+        onClear={clearSearch}
+        />
 
         <ReadingForm
             newReadings={newReadings}
@@ -111,12 +120,6 @@ export default function Readings() {
 
         <hr />
 
-        <ReadingSearch
-        filters={searchFilters}
-        setFilters={setSearchFilters}
-        onSearch={searchReadings}
-        onClear={clearSearch}
-        />
 
         <ReadingList readings={filteredReadings ?? readings} deleteReading={deleteReading} />
         </div>

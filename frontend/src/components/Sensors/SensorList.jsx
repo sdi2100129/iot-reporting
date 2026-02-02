@@ -4,7 +4,10 @@ export default function SensorList({ sensors, deleteSensor, updateSensor}) {
 
   return (
     <div>
-      <h3>All Sensors</h3>
+      <h3 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
+        All Sensors
+      </h3>
+      
       <ul>
         {sensors.map(s => (
           <li key={s.sensorId}>

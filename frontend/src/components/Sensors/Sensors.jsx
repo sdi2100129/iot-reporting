@@ -81,7 +81,26 @@ export default function Sensors() {
 
   return (
     <div>
-      <h2>Sensors</h2>
+      {/* Page Title */}
+      <h1 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
+        Sensors
+      </h1>
+
+      {/* Search bar */}
+      <div className="mb-6">
+        <SensorSearch
+          onSelectSensor={(sensor) => {
+            setNewSensors([{
+              sensorId: sensor.sensorId,
+              type: sensor.sensorType,
+              vendorName: sensor.vendorName,
+              vendorEmail: sensor.vendorEmail,
+              description: sensor.description,
+              location: sensor.location
+            }])
+          }}
+        />
+      </div>
 
       <hr />
       <SensorForm
@@ -100,18 +119,7 @@ export default function Sensors() {
       />
 
       <hr />
-      <SensorSearch 
-        onSelectSensor={(sensor) => {
-          setNewSensors([{
-            sensorId: sensor.sensorId,
-            type: sensor.sensorType ,
-            vendorName: sensor.vendorName,
-            vendorEmail: sensor.vendorEmail,
-            description: sensor.description,
-            location: sensor.location
-          }])
-        }}
-      />
+      
     </div>
   )
 }
