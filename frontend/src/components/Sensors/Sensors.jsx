@@ -24,7 +24,6 @@ export default function Sensors() {
   // Fetch sensors on first load
   useEffect(() => { fetchSensors() }, [])
 
-
   // ADD 
   const addSensor = async (sensor) => {
     try {
@@ -92,8 +91,13 @@ export default function Sensors() {
         updateSensor={updateSensor}
       />
 
+
       <hr />
-      <SensorList sensors={sensors} deleteSensor={deleteSensor} />
+      <SensorList 
+        sensors={sensors} 
+        deleteSensor={deleteSensor} 
+        updateSensor={updateSensor}
+      />
 
       <hr />
       <SensorSearch 

@@ -163,3 +163,38 @@ I run the project in Linux using WSL for compatibility with other machines and b
 Re-render όταν αλλάζουν δεδομένα
 FRONT END SELECTION:
 The front end is implemented by React + Vite. Because React give you tools like useState hook to keep sensors and readings, useEffect hook to fetch data from the API and components. Without those tools the implementation would had to be manual.Also used with Axios for HTTP client that works very good with API projects as it auto-parses JSON format and provides error handling.
+
+
+DESIGN
+1. Tailwind CSS (Best choice for our case)
+This is what most modern React dashboards use.
+
+Why?
+-   You style directly in JSX. No separate .css files
+-   You get beautiful spacing, fonts, colors, shadows
+-   You can build cards, tables, forms, grids fast
+
+
+2. A Component Library on top of Tailwind
+saves weeks of UI work, since you’re building forms, tables, search, dashboards, use:
+
+🔹 shadcn/ui (industry standard)
+
+It gives you:
+-   Beautiful buttons
+-   Tables
+-   Inputs
+-   Modals
+-   Cards
+
+
+3. Chart library (for readings later)
+Our data is perfect for graphs.
+!!!!!!!!!!!!!!Add later:
+Recharts
+or Chart.js
+
+to display:
+Sensor values over time
+Per sensor type
+Per location
