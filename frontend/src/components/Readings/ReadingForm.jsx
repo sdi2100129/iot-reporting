@@ -1,5 +1,3 @@
-// add/ search reading
-
 import React from "react";
 
 export default function ReadingForm({ newReadings, setNewReadings, addReading }) {
@@ -7,24 +5,54 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
 
   const handleInputChange = (index, field, value) => {
     const updatedReadings = [...newReadings];
-    updatedReadings[index][field] = value;
+    updatedReadings[index] = {
+      ...updatedReadings[index],
+      [field]: value
+    };
     setNewReadings(updatedReadings);
   };
+
+  const readingTypes = ["Acoustic", "Humidity", "Temperature"]; // example dropdown
 
   return (
     <div>
       <h3 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
         Add Reading
       </h3>
+
       {newReadings.map((reading, index) => (
-        <div key={index}>
+        <div key={index} className="flex flex-wrap gap-2 mb-4">
           {fields.map((field) => (
-            <input key={field} placeholder={field} value={reading[field]}
-              onChange={(e) => handleInputChange(index, field, e.target.value)}
-            />
+            field === "readingType" ? (
+              <select
+                key={field}
+                value={reading.readingType}
+                onChange={(e) => handleInputChange(index, "readingType", e.target.value)}
+                className="border p-2rounded "
+              >
+                <option value="Acoustic">Acoustic</option>
+                <option value="Humidity">Humidity</option>
+                <option value="Temperature">Temperature</option>
+              </select>
+            ) : (
+              <input
+                key={field}
+                placeholder={field}
+                value={reading[field] || ""}
+                onChange={(e) => handleInputChange(index, field, e.target.value)}
+                className="border p-2 rounded min-w-[150px]"
+              />
+            )
           ))}
-          <br />
-          <button onClick={() => addReading(reading)}>Add</button>
+
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => addReading(reading)}
+              className="!bg-blue-500 !text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            >
+              Add
+            </button>
+          </div>
         </div>
       ))}
     </div>
