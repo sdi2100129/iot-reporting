@@ -40,15 +40,15 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
                 placeholder={field}
                 value={reading[field] || ""}
                 onChange={(e) => handleInputChange(index, field, e.target.value)}
-                className="border p-2 rounded "
+                className="border p-2 rounded h-10"
               />
             )
           ))}
 
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 h-10 items-center">
             <button
               onClick={() => addReading(reading)}
-              className="!bg-blue-500 !text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              className="!bg-blue-500 !text-white rounded hover:bg-blue-700 transition"
             >
               Add
             </button>

@@ -2,7 +2,7 @@ import { Search,Trash2 } from "lucide-react"
 
 export default function ReadingSearch({ filters, setFilters, onSearch, onClear }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 mb-6">
+    <div className="flex flex-wrap w-full justify-center items-center gap-4 mb-6">
 
       <select
         value={filters.sensor_type}
