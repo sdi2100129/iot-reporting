@@ -21,7 +21,7 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
       </h3>
 
       {newReadings.map((reading, index) => (
-        <div key={index} className="flex flex-wrap gap-2 mb-4">
+        <div key={index} className="flex gap-2 flex-wrap">
           {fields.map((field) => (
             field === "readingType" ? (
               <select
@@ -40,7 +40,7 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
                 placeholder={field}
                 value={reading[field] || ""}
                 onChange={(e) => handleInputChange(index, field, e.target.value)}
-                className="border p-2 rounded min-w-[150px]"
+                className="border p-2 rounded "
               />
             )
           ))}

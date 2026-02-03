@@ -1,6 +1,8 @@
+import { Search,Trash2 } from "lucide-react"
+
 export default function ReadingSearch({ filters, setFilters, onSearch, onClear }) {
   return (
-    <div>
+    <div className="flex flex-wrap items-center gap-4 mb-6">
 
       <select
         value={filters.sensor_type}
@@ -24,8 +26,20 @@ export default function ReadingSearch({ filters, setFilters, onSearch, onClear }
         onChange={e => setFilters({ ...filters, time: e.target.value })}
       />
 
-      <button onClick={onSearch}>Search</button>
-      <button onClick={onClear}>Clear</button>
+      <button onClick={onSearch}
+      className="flex items-center justify-center p-0 m-0 bg-transparent 
+                    text-gray-400 hover:text-purple-600 
+                    focus:outline-none focus:ring-0 outline-none border-none transition">
+        <Search className="w-6 h-6 pointer-events-none"  />
+      </button>
+      
+      <button onClick={onClear}
+      className="flex items-center justify-center p-0 m-0 bg-transparent border-none 
+                text-gray-400 hover:text-red-500 transition
+                focus:outline-none focus:ring-0 outline-none">
+        <Trash2 className="w-5 h-5" />
+      </button>
+
     </div>
   );
 }

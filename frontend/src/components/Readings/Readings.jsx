@@ -105,7 +105,7 @@ export default function Readings() {
             Sensor Readings
         </h1>
 
-        <hr />
+        <br />
         <ReadingSearch
         filters={searchFilters}
         setFilters={setSearchFilters}
@@ -122,6 +122,9 @@ export default function Readings() {
 
         <hr />
         <ReadingList readings={filteredReadings ?? readings} deleteReading={deleteReading} />
+
+        <br/>
+        
         </div>
     );
 
