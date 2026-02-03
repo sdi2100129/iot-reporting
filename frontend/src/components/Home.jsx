@@ -2,7 +2,7 @@ import bg from "../assets/layered-steps-haikei.svg";
 
 export default function Home() {
   return (
-    <div className="relative z-0 w-screen min-h-[calc(100vh-5rem)] pt-px text-white text-center overflow-hidden">
+    <div className="z-0 relative w-screen left-1/2 -ml-[50vw] min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center text-center text-white overflow-hidden">
 
       {/* Background SVG */}
       <img
