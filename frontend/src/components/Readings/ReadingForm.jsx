@@ -12,8 +12,6 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
     setNewReadings(updatedReadings);
   };
 
-  const readingTypes = ["Acoustic", "Humidity", "Temperature"]; // example dropdown
-
   return (
     <div>
       <h3 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
@@ -21,38 +19,71 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
       </h3>
 
       {newReadings.map((reading, index) => (
-        <div key={index} className="flex gap-2 flex-wrap">
-          {fields.map((field) => (
-            field === "readingType" ? (
-              <select
-                key={field}
-                value={reading.readingType}
-                onChange={(e) => handleInputChange(index, "readingType", e.target.value)}
-                className="border p-2rounded "
-              >
-                <option value="Acoustic">Acoustic</option>
-                <option value="Humidity">Humidity</option>
-                <option value="Temperature">Temperature</option>
-              </select>
-            ) : (
+        <div key={index} className="flex gap-2 flex-wrap items-center">
+
+          {fields.map((field) => {
+            // Dropdown
+            if (field === "readingType") {
+              return (
+                <select
+                  key={field}
+                  value={reading.readingType || ""}
+                  onChange={(e) => handleInputChange(index, "readingType", e.target.value)}
+                  className="border h-10 px-2 rounded"
+                >
+                  <option value="">Type</option>
+                  <option value="Acoustic">Acoustic</option>
+                  <option value="Humidity">Humidity</option>
+                  <option value="Temperature">Temperature</option>
+                </select>
+              );
+            }
+
+            // Calendar picker
+            if (field === "readingDate") {
+              return (
+                <input
+                  key={field}
+                  type="date"
+                  value={reading.readingDate || ""}
+                  onChange={(e) => handleInputChange(index, field, e.target.value)}
+                  className="border h-10 px-2 rounded"
+                />
+              );
+            }
+
+            // Time picker
+            if (field === "readingTime") {
+              return (
+                <input
+                  key={field}
+                  type="time"
+                  value={reading.readingTime || ""}
+                  onChange={(e) => handleInputChange(index, field, e.target.value)}
+                  className="border h-10 px-2 rounded focus:ring-2 focus:ring-purple-600"
+                />
+              );
+            }
+
+            // Normal inputs
+            return (
               <input
                 key={field}
                 placeholder={field}
                 value={reading[field] || ""}
                 onChange={(e) => handleInputChange(index, field, e.target.value)}
-                className="border p-2 rounded h-10"
+                className="border h-10 px-2 rounded"
               />
-            )
-          ))}
+            );
+          })}
 
-          <div className="flex gap-2 h-10 items-center">
-            <button
-              onClick={() => addReading(reading)}
-              className="!bg-blue-500 !text-white rounded hover:bg-blue-700 transition"
-            >
-              Add
-            </button>
-          </div>
+          <button
+            onClick={() => addReading(reading)}
+            className="!bg-blue-500 !text-white item-center h-10 px-4 rounded hover:bg-blue-700 transition"
+          >
+            Add
+          </button>
+
         </div>
       ))}
     </div>

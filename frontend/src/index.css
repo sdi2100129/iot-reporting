@@ -73,6 +73,25 @@ body {
   min-height: 100vh;
 }
 
+/* Date picker icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.4) sepia(1) saturate(10) hue-rotate(210deg);
+  cursor: pointer;
+}
+
+/* Time picker icon */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.4) sepia(1) saturate(10) hue-rotate(210deg);
+  cursor: pointer;
+}
+
+/* Hover glow */
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.4) sepia(1) saturate(10) hue-rotate(270deg);
+}
+
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
