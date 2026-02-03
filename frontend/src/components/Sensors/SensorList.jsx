@@ -17,7 +17,7 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
           >
 
             {/* Action buttons */}
-            <div className="absolute top-4 right-4 flex gap-3">
+            <div className="absolute top-4 flex gap-3">
               
               <button
                 onClick={() => updateSensor(s)}

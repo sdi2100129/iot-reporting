@@ -18,7 +18,7 @@ const App = () => {
 
           <NavBar />
 
-          <main className="flex-grow min-h-[calc(100vh-5rem)]">
+          <main className="flex-grow">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/sensors" element={<Sensors />} />
