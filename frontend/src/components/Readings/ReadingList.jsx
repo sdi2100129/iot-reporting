@@ -29,7 +29,7 @@ export default function ReadingList({ readings, deleteReading }) {
             </button>
 
             {/* Reading ID */}
-            <div className="flex items-center gap-2 text-purple-600 text-3xl font-bold mb-4">
+            <div className="flex justify-center items-center gap-2 text-purple-600 text-3xl font-bold mb-4">
               <Hash className="w-6 h-6" />
               {r.id}
             </div>

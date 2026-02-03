@@ -120,7 +120,7 @@ export default function Sensors() {
         updateSensor={updateSensor}
       />
 
-      <hr />
+      <br />
       
     </div>
   )

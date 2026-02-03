@@ -7,6 +7,7 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
       <h3 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-12 tracking-wider font-[cursive] text-center">
         All Sensors
       </h3>
+
       <br />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -18,7 +19,7 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
           >
 
             {/* Action buttons */}
-            <div className="absolute top-4 flex gap-3">
+            <div className="absolute top-4 right-4 flex gap-3">
               
               <button
                 onClick={() => updateSensor(s)}
