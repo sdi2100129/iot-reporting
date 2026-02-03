@@ -16,6 +16,8 @@ export default function Home() {
         Sensor Management Platform
       </h1>
 
+      <br />
+
       <p className="text-center mx-auto text-lg z-10 justify-center">
         Monitor, manage and analyze your IoT sensors in one powerful dashboard.
         Built for performance, clarity and real-time control.

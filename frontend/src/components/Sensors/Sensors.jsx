@@ -10,6 +10,9 @@ export default function Sensors() {
     sensorId: "", type: "", vendorName: "", vendorEmail: "", description: "", location: ""
   }])
 
+  const [filteredSensors, setFilteredSensors] = useState(null);
+
+
 
   // FETCH ALL  
   const fetchSensors = async () => {
@@ -91,16 +94,7 @@ export default function Sensors() {
       {/* Search bar */}
       <div className="mb-6">
         <SensorSearch
-          onSelectSensor={(sensor) => {
-            setNewSensors([{
-              sensorId: sensor.sensorId,
-              type: sensor.sensorType,
-              vendorName: sensor.vendorName,
-              vendorEmail: sensor.vendorEmail,
-              description: sensor.description,
-              location: sensor.location
-            }])
-          }}
+          onSelectSensor={(sensor) => setFilteredSensors([sensor])}
         />
       </div>
 
@@ -115,7 +109,7 @@ export default function Sensors() {
 
       <hr />
       <SensorList 
-        sensors={sensors} 
+        sensors={filteredSensors ?? sensors} 
         deleteSensor={deleteSensor} 
         updateSensor={updateSensor}
       />
