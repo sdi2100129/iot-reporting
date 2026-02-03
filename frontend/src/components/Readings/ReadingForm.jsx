@@ -79,7 +79,9 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
 
           <button
             onClick={() => addReading(reading)}
-            className="!bg-blue-500 !text-white item-center h-10 px-4 rounded hover:bg-blue-700 transition"
+            className="!bg-blue-500 !text-white h-10 px-4 rounded 
+             flex items-center justify-center 
+             hover:bg-blue-700 transition"
           >
             Add
           </button>
