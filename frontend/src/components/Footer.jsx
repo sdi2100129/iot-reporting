@@ -2,7 +2,7 @@ import { Mail, Github, Linkedin } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="w-full border-t border-slate-800">
+    <footer className="w-full border-t border-slate-800 z-50">
       {/* This inner div ensures consistent padding and width regardless of page content */}
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div>© {new Date().getFullYear()} SensorHub — All rights reserved</div>

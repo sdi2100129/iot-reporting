@@ -86,6 +86,8 @@ export default function Sensors() {
         Sensors
       </h1>
 
+      <br />
+
       {/* Search bar */}
       <div className="mb-6">
         <SensorSearch

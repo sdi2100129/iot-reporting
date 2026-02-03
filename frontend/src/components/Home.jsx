@@ -2,13 +2,13 @@ import bg from "../assets/layered-steps-haikei.svg";
 
 export default function Home() {
   return (
-    <div className="z-0 relative w-screen left-1/2 -ml-[50vw] min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center text-center text-white overflow-hidden">
+    <div className="z-0 relative w-full w-screen min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center text-center text-white overflow-hidden">
 
       {/* Background SVG */}
       <img
         src={bg}
         alt="Background pattern"
-        className="absolute inset-0 items-center w-full h-full -z-10 object-cover pointer-events-none"
+        className="fixed inset-0 top-[5rem] w-screen h-[calc(100vh-5rem)] object-cover -z-10 pointer-events-none"
       />
 
       {/* Content */}
