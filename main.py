@@ -131,7 +131,7 @@ def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
         return {
             "message": "Sensor retrieved successfully",
             "sensorId": db_sensor.sensorId,
-            "sensorType": db_sensor.type,
+            "type": db_sensor.type,
             "vendorName": db_sensor.vendorName,
             "vendorEmail": db_sensor.vendorEmail,
             "description": db_sensor.description,
