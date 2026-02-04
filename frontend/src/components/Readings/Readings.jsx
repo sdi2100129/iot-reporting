@@ -25,6 +25,9 @@ export default function Readings() {
 
     const [filteredReadings, setFilteredReadings] = useState(null);
 
+    const [error, setError] = useState(null);
+
+
 
 
     const fetchReadings = async () => {

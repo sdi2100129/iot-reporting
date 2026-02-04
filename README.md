@@ -38,19 +38,32 @@ In fastAPI Create is done with POST request, Read is done with GET request, Upda
     │   │       └── ReadingMetrics.jsx
     │   └── main.jsx
 
+# 🔐 Environment Setup
+
+This project uses environment variables for sensitive data (database credentials).
+
+For security reasons, the `.env` file is not included in the repository.
 
 
 # Installation
 
-1. Clone the repository:
+1. Clone the repository
 git clone https://github.com/aorfanoudaki/iot-reporting-api.git
-cd sensor-api
+cd iot-reporting-api
 
-2. Create virtual environment:
+
+2. Create your own .env file
+cp .env.example .env
+
+3. Edit .env and enter your database credentials:
+DB_PASSWORD=your_database_password
+
+
+4. Create virtual environment:
 python -m venv venv
 source venv/bin/activate
 
-3. Install dependencies:
+5. Install dependencies:
 pip install -r requirements.txt
 
 

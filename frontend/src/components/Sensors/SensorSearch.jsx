@@ -2,24 +2,8 @@ import { useState } from "react"
 import { Search } from "lucide-react"
 import api from "../../api"
 
-export default function SensorSearch({ onSelectSensor }) {
-  const [selectedId, setSelectedId] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const getSensor = async () => {
-    if (!selectedId) return;
-
-    try {
-      setLoading(true);
-      const res = await api.get(`/sensors/${selectedId}`);
-      onSelectSensor(res.data); // <-- send sensor back to parent
-    } catch (err) {
-      alert(err.response?.data?.detail || "Sensor not found");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function SensorSearch({ onSearch }) {
+  const [id, setId] = useState("");
 
   return (
     <div className="max-w-xl mx-auto">
@@ -27,14 +11,14 @@ export default function SensorSearch({ onSelectSensor }) {
         <input
           type="text"
           placeholder="Search sensor by ID..."
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && getSensor()}
+          value={id}
+          onChange={(e) => setId(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onSearch(id)}
           className="flex-1 bg-transparent outline-none text-lg px-2"
         />
 
         <button
-          onClick={getSensor}
+          onClick={() => onSearch(id)}
           tabIndex={-1}
           className="flex items-center justify-center p-0 m-0 bg-transparent 
                      text-gray-400 hover:text-purple-600 
