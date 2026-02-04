@@ -7,6 +7,7 @@ export default function ReadingSearch({ filters, setFilters, onSearch, onClear }
       <select
         value={filters.sensor_type}
         onChange={e => setFilters({ ...filters, sensor_type: e.target.value })}
+        className="border h-10 px-2 rounded"
       >
         <option value="">All Types</option>
         <option value="Temperature">Temperature</option>
@@ -18,12 +19,14 @@ export default function ReadingSearch({ filters, setFilters, onSearch, onClear }
         placeholder="Location"
         value={filters.location}
         onChange={e => setFilters({ ...filters, location: e.target.value })}
+        className="border h-10 px-2 rounded"
       />
 
       <input
         type="time"
         value={filters.time}
         onChange={e => setFilters({ ...filters, time: e.target.value })}
+        className="border h-10 px-2 rounded"
       />
 
       <button onClick={onSearch}

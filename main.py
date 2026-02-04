@@ -362,7 +362,7 @@ def search_readings(
     }
 
 
-@app.get("/readings/metrics")
+@app.get("/metrics")
 def readings_metrics(
     sensor_type: str = None,
     location: str = None,
@@ -396,7 +396,13 @@ def readings_metrics(
     values = [r.readingValue for r in query.all()]
 
     if not values:
-        raise HTTPException(status_code=404, detail="No readings found")
+        return {
+            "count": 0,
+            "range": None,
+            "mean": None,
+            "top10_max": [],
+            "top10_min": []
+    }
 
     values_sorted = sorted(values)
 

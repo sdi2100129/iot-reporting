@@ -145,6 +145,7 @@ export default function Readings() {
         </h1>
 
         <br />
+        
         <ReadingSearch
         filters={searchFilters}
         setFilters={setSearchFilters}

@@ -5,6 +5,7 @@ import NavBar from "./components/NavBar.jsx"
 import Footer from "./components/Footer.jsx"
 import Sensors from "./components/Sensors/Sensors.jsx"
 import Readings from "./components/Readings/Readings.jsx"  
+import Metrics from "./components/Metrics"
 import {BrowserRouter as Router, Route, Routes, Link} from "react-router-dom"
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/sensors" element={<Sensors />} />
               <Route path="/readings" element={<Readings />} />
+              <Route path="/metrics" element={<Metrics />} />
             </Routes>
           </main>
           
