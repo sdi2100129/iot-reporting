@@ -26,7 +26,7 @@ export default function Readings() {
     const [filteredReadings, setFilteredReadings] = useState(null);
 
     const [error, setError] = useState(null);
-
+    const [success, setSuccess] = useState(null);
 
 
 
@@ -34,14 +34,19 @@ export default function Readings() {
         try {
             const response = await api.get("/readings");
             setReadings(response.data.data);
-        } catch (error) {
-            console.error("Error fetching readings:", error);
+        } catch (err) {
+            const detail = err.response?.data?.detail;
+            if (Array.isArray(detail)) {
+                setError(detail.map(e => e.msg).join(". "));
+            } else {
+                setError(detail || "Failed to fetch readings");
+            }
         }
     };  
 
     useEffect(() => { fetchReadings() }, []);
 
-    // ADD 
+    // Add
     const addReading = async (reading) => {
         try {
             const res = await api.post("/readings", {
@@ -54,49 +59,63 @@ export default function Readings() {
                 description: reading.description
             });
             fetchReadings();
-            alert(res.data.message || "Reading added successfully");
+            setSuccess("Reading added successfully");
         } catch (err) {
             const detail = err.response?.data?.detail;
-            alert(JSON.stringify(detail, null, 2));
-            console.error(err);
+            if (Array.isArray(detail)) {
+                setError(detail.map(e => e.msg).join(". "));
+            } else {
+                setError(detail || "Failed to add sensor");
+            }
         }
     };
 
-    // delete 
+
+    // Delete 
     const deleteReading = async (readingId) => {
         try {
             const res = await api.delete(`/readings/${readingId}`);
             fetchReadings();
-            alert("Reading deleted successfully");
+            setSuccess("Reading deleted successfully");
         } catch (err) {
             const detail = err.response?.data?.detail;
-            alert(JSON.stringify(detail, null, 2));
-            console.error(err);
+            if (Array.isArray(detail)) {
+                setError(detail.map(e => e.msg).join(". "));
+            } else {
+                setError(detail || "Failed to delete sensor");
+            }
         }
     };
 
 
-    // search
+    // Search
 
     const searchReadings = async () => {
         try {
-            const res = await api.get("/readings/search", {
-            params: {
-                sensor_type: searchFilters.sensor_type || undefined,
-                location: searchFilters.location || undefined,
-                time: searchFilters.time || undefined,
-                page: searchFilters.page
-            }
+            const res = await api.get("/readings/search",{ params: { 
+                sensor_type: searchFilters.sensor_type || undefined, 
+                location: searchFilters.location || undefined, 
+                time: searchFilters.time || undefined, 
+                page: searchFilters.page } 
             });
 
             setFilteredReadings(res.data.data);
+            setSuccess("Reading found successfully");
+            setError(null);   
         } catch (err) {
-            alert(err.response?.data?.detail || "Search failed");
+            const detail = err.response?.data?.detail;
+            if (Array.isArray(detail)) {
+                setError(detail.map(e => e.msg).join(". "));
+            } else {
+                setError(detail || "Reading not found");
+            }
+            setSuccess(null);  
         }
     };
 
+
     const clearSearch = () => {
-    setFilteredReadings(null);
+        setFilteredReadings(null);
     };
 
 
@@ -104,6 +123,23 @@ export default function Readings() {
     // UI  -
     return (
         <div>
+
+        {/* Error Banner */}
+        {error && (
+            <div className="bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded mb-4">
+            <strong>Error:</strong> {typeof error === "string" ? error : JSON.stringify(error)}
+            <button className="float-right font-bold text-red-800" onClick={() => setError(null)}>✕</button>
+            </div>
+        )}
+
+        {/* Success Banner */}
+        {success && (
+            <div className="bg-green-100 border border-green-500 text-green-700 px-4 py-3 rounded mb-4">
+            <strong>Success:</strong> {success}
+            <button className="float-right font-bold text-green-800" onClick={() => setSuccess(null)}>✕</button>
+            </div>
+        )}
+
         <h1 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
             Sensor Readings
         </h1>

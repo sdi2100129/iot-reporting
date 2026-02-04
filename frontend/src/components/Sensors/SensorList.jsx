@@ -1,8 +1,32 @@
 import { Trash2, Edit3, MapPin, Cpu } from "lucide-react"
+import { useState } from "react";
 
 export default function SensorList({ sensors, deleteSensor, updateSensor }) {
+  const [confirmId, setConfirmId] = useState(null);
+
   return (
     <div className="mt-12">
+
+      {/* Confirmation Banner */}
+      {confirmId && (
+        <div className="bg-yellow-100 border border-yellow-500 text-yellow-700 px-4 py-3 rounded mb-4 flex justify-between items-center">
+          <span>Are you sure you want to delete sensor #{confirmId}?</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { deleteSensor(confirmId); setConfirmId(null); }}
+              className="!bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setConfirmId(null)}
+              className="text-white px-3 py-1 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <h3 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-12 tracking-wider font-[cursive] text-center">
         All Sensors
@@ -31,7 +55,7 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
               </button>
 
               <button
-                onClick={() => deleteSensor(s.sensorId)}
+                onClick={() => setConfirmId(s.sensorId)} // trigger confirmation
                 className="flex items-center justify-center p-0 m-0 bg-transparent border-none 
                 text-gray-400 hover:text-red-500 transition
                 focus:outline-none focus:ring-0 outline-none"

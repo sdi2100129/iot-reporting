@@ -96,6 +96,7 @@ export default function Sensors() {
     }
   }
 
+  // SEARCH
   const searchSensor = async (id) => {
     if (!id) return;
 

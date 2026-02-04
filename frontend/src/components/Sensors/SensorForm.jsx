@@ -29,6 +29,7 @@ export default function SensorForm({ newSensors, setNewSensors, addSensor, updat
                 onChange={e => handleInputChange(index, "type", e.target.value)}
                 className="border p-2 rounded "
               >
+                <option value="Type">Type</option>
                 <option value="Acoustic">Acoustic</option>
                 <option value="Humidity">Humidity</option>
                 <option value="Temperature">Temperature</option>
