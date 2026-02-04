@@ -123,7 +123,9 @@ export default function Readings() {
     // UI  -
     return (
         <div>
-
+        
+        <br />
+        
         {/* Error Banner */}
         {error && (
             <div className="bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded mb-4">
@@ -145,7 +147,7 @@ export default function Readings() {
         </h1>
 
         <br />
-        
+
         <ReadingSearch
         filters={searchFilters}
         setFilters={setSearchFilters}

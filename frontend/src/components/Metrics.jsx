@@ -36,80 +36,85 @@ export default function Metrics() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
 
-        <h1 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
-            Metrics
-        </h1>
+        <div className="w-full">
 
-        <br />
+            <br/ >
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <h1 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
+                Metrics
+            </h1>
 
-            <select
-                value={filters.sensor_type}
-                onChange={e => setFilters({ ...filters, sensor_type: e.target.value })}
-                className="border h-10 px-2 rounded"
-            >
-                <option value="">All Types</option>
-                <option value="Temperature">Temperature</option>
-                <option value="Humidity">Humidity</option>
-                <option value="Acoustic">Acoustic</option>
-            </select>
+            <br />
 
-            <input
-            type="text"
-            placeholder="Location"
-            value={filters.location}
-            onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-            className="border rounded px-3 py-2 flex-1"
-            />
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
 
-            <input
-            type="time"
-            placeholder="Time"
-            value={filters.time}
-            onChange={(e) => setFilters({ ...filters, time: e.target.value })}
-            className="border rounded px-3 py-2 flex-1"
-            />
+                <select
+                    value={filters.sensor_type}
+                    onChange={e => setFilters({ ...filters, sensor_type: e.target.value })}
+                    className="border h-10 px-2 rounded"
+                >
+                    <option value="">All Types</option>
+                    <option value="Temperature">Temperature</option>
+                    <option value="Humidity">Humidity</option>
+                    <option value="Acoustic">Acoustic</option>
+                </select>
 
-            <button
-            onClick={getMetrics}
-            className="!bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-            >
-            Get Metrics
-            </button>
+                <input
+                type="text"
+                placeholder="Location"
+                value={filters.location}
+                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                className="border rounded px-3 py-2 flex-1"
+                />
 
-        </div>
+                <input
+                type="time"
+                placeholder="Time"
+                value={filters.time}
+                onChange={(e) => setFilters({ ...filters, time: e.target.value })}
+                className="border rounded px-3 py-2 flex-1"
+                />
 
-        {/* Error */}
-        {error && (
-            <div className="bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded mb-4">
-            <strong>Error:</strong> {error}
+                <button
+                onClick={getMetrics}
+                className="!bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+                >
+                Get Metrics
+                </button>
+
             </div>
-        )}
 
-        {/* Metrics */}
-        {metrics && metrics.range && (
-            <div className="bg-white p-6 rounded shadow-md">
-            <p><strong>Count:</strong> {metrics.count}</p>
-            <p>
-                <strong>Range:</strong> {metrics.range.min} - {metrics.range.max}
-            </p>
-            <p><strong>Mean:</strong> {metrics.mean}</p>
-            <p><strong>Top 10 Max:</strong> {metrics.top10_max.join(", ")}</p>
-            <p><strong>Top 10 Min:</strong> {metrics.top10_min.join(", ")}</p>
+            {/* Error */}
+            {error && (
+                <div className="bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded mb-4">
+                <strong>Error:</strong> {error}
+                </div>
+            )}
+
+            {/* Metrics */}
+            {metrics && metrics.range && (
+                <div className="bg-white p-6 rounded shadow-md">
+                <p><strong>Count:</strong> {metrics.count}</p>
+                <p>
+                    <strong>Range:</strong> {metrics.range.min} - {metrics.range.max}
+                </p>
+                <p><strong>Mean:</strong> {metrics.mean}</p>
+                <p><strong>Top 10 Max:</strong> {metrics.top10_max.join(", ")}</p>
+                <p><strong>Top 10 Min:</strong> {metrics.top10_min.join(", ")}</p>
+                </div>
+            )}
+
+            {metrics && !metrics.range && (
+                <div className="bg-yellow-100 border border-yellow-500 text-yellow-700 px-4 py-3 rounded mb-4">
+                No readings match your filters.
             </div>
-        )}
-
-        {metrics && !metrics.range && (
-        <div className="bg-yellow-100 border border-yellow-500 text-yellow-700 px-4 py-3 rounded mb-4">
-            No readings match your filters.
-        </div>
-        )}
 
 
+            )}
+
+        
         </div>
     );
 }

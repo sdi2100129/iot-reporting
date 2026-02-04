@@ -1,4 +1,4 @@
-import { Trash2, Edit3, MapPin, Cpu } from "lucide-react"
+import { Trash2, Edit3, MapPin, Cpu, Mail, FileText  } from "lucide-react"
 import { useState } from "react";
 
 export default function SensorList({ sensors, deleteSensor, updateSensor }) {
@@ -38,55 +38,61 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
         {sensors.map((s) => (
           <div
             key={s.sensorId}
-            className="relative bg-white rounded-2xl shadow-lg p-6 border border-gray-100 
-                       hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            className="relative bg-white rounded-2xl shadow-lg p-8 pt-12 pb-12 border border-gray-100 
+                       hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 min-h-[250px] flex flex-col justify-center"
           >
-
-            {/* Action buttons */}
-            <div className="absolute top-4 right-4 flex gap-3">
-              
-              <button
-                onClick={() => updateSensor(s)}
-                className="flex items-center justify-center p-0 m-0 bg-transparent border-none 
-                text-gray-400 hover:text-purple-600 transition
-                focus:outline-none focus:ring-0 outline-none"
-              >
-                <Edit3 className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={() => setConfirmId(s.sensorId)} // trigger confirmation
-                className="flex items-center justify-center p-0 m-0 bg-transparent border-none 
-                text-gray-400 hover:text-red-500 transition
-                focus:outline-none focus:ring-0 outline-none"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-
-            </div>
-
-            {/* Sensor ID */}
-            <div className="text-4xl font-bold text-purple-600 mb-4">
+            {/* ID - Centered Top */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 text-4xl font-black text-purple-600">
               #{s.sensorId}
             </div>
 
-            {/* Sensor Type */}
-            <div className="flex items-center gap-2 text-lg font-medium text-gray-700 mb-2">
-              <Cpu className="w-5 h-5 text-purple-400" />
-              {s.type}
+            {/* Action buttons */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              <button onClick={() => updateSensor(s)} className="flex items-center justify-center bg-transparent border-none
+                        text-gray-400 hover:text-purple-600 transition">
+                <Edit3 className="w-5 h-5" />
+              </button>
+              <button onClick={() => setConfirmId(s.sensorId)} className="flex items-center justify-center bg-transparent border-none
+                        text-gray-400 hover:text-red-500 transition">
+                <Trash2 className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Location */}
-            <div className="flex items-center gap-2 text-gray-500 mb-4">
-              <MapPin className="w-5 h-5 text-purple-400" />
-              {s.location}
+            {/* Content Layout - Two Columns aligned */}
+            <div className="grid grid-cols-2 gap-x-6 items-start">
+              
+              {/* LEFT COLUMN */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-5 h-5 text-purple-400 shrink-0" />
+                  <span className="text-lg font-bold text-gray-700 truncate">{s.type}</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-purple-400 shrink-0" />
+                  <span className="text-sm text-gray-500">{s.location}</span>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN */}
+              <div className="space-y-6 border-l border-gray-50 pl-6">
+                <div className="flex items-start gap-2">
+                  <Mail className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <span className="text-sm text-purple-700 font-medium break-all line-clamp-2">{s.vendorEmail}</span>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <FileText className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-600 leading-tight line-clamp-3">{s.description}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Vendor */}
-            <div className="text-sm text-gray-400">
-              Vendor: <span className="text-gray-600">{s.vendorName}</span>
+            {/* Vendor Name - Centered Bottom */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full text-center">
+              <span className="text-xs uppercase tracking-widest text-gray-400">Vendor: </span>
+              <span className="text-sm font-semibold text-gray-600">{s.vendorName}</span>
             </div>
-
           </div>
         ))}
       </div>
