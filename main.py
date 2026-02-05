@@ -142,18 +142,28 @@ def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
 
 
 @app.get("/readings")
-def get_readings(db : Session = Depends(get_db)):
+def get_readings( page: int = 1, db : Session = Depends(get_db)):
     """
     Returns all sensor readings.
     """
+    page_size = 10
+    db_readings = db.query(db_models.SensorReading)
+    total = db_readings.count()
 
-    db_readings = db.query(db_models.SensorReading).all()
+    results = db_readings.offset((page - 1) * page_size).limit(page_size).all()
+
+    # when no readings return 1 page not 0
+    pages = max(1, (total + page_size - 1) // page_size)
+
     return {
         "success": True,
-        "count": len(db_readings),
-        "data": db_readings
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "pages": pages,
+        "data": results
     }
-     
+
 
 @app.post("/sensors")
 def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
@@ -353,11 +363,17 @@ def search_readings(
         query = query.filter(db_models.SensorReading.readingTime >= time)
 
     page_size = 10
+    total = query.count()
     results = query.offset((page - 1) * page_size).limit(page_size).all()
+
+
+    pages = max(1, (total + page_size - 1) // page_size)
 
     return {
         "success": True,
         "count": len(results),
+        "total": total,
+        "pages": pages,
         "data": results
     }
 

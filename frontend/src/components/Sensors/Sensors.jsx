@@ -166,6 +166,7 @@ export default function Sensors() {
       </div>
 
       <hr />
+
       <SensorForm
         newSensors={newSensors}
         setNewSensors={setNewSensors}

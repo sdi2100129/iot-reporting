@@ -1,8 +1,8 @@
-import { Trash2, Thermometer, Cpu, Hash } from "lucide-react"
-import { useState } from "react";
+import { Trash2 } from "lucide-react"
+import { useState } from "react"
 
-export default function ReadingList({ readings, deleteReading }) {
-  const [confirmId, setConfirmId] = useState(null);
+export default function ReadingList({ readings, deleteReading, page, setPage, pages  }) {
+  const [confirmId, setConfirmId] = useState(null)
 
   return (
     <div className="mt-12">
@@ -13,14 +13,14 @@ export default function ReadingList({ readings, deleteReading }) {
           <span>Are you sure you want to delete reading #{confirmId}?</span>
           <div className="flex gap-2">
             <button
-              onClick={() => { deleteReading(confirmId); setConfirmId(null); }}
-              className="!bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+              onClick={() => { deleteReading(confirmId); setConfirmId(null) }}
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
             >
               Yes
             </button>
             <button
               onClick={() => setConfirmId(null)}
-              className="text-white px-3 py-1 rounded hover:bg-gray-400"
+              className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
             >
               Cancel
             </button>
@@ -32,51 +32,80 @@ export default function ReadingList({ readings, deleteReading }) {
         All Readings
       </h3>
 
+      {/* PAGINATIOIN */}
+      <div className="flex justify-center items-center gap-4 mt-6">
+
+        <button
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="px-4 py-2 rounded bg-purple-500 text-white disabled:bg-gray-300"
+        >
+          Prev
+        </button>
+
+        <span className="text-gray-700 font-semibold">
+          Page {page} of {pages}
+        </span>
+
+        <button
+          onClick={() => setPage(p => Math.min(pages, p + 1))}
+          disabled={page === pages}
+          className="px-4 py-2 rounded bg-purple-500 text-white disabled:bg-gray-300"
+        >
+          Next
+        </button>
+
+      </div>
+
       <br/>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {readings.map((r) => (
-          <div
-            key={r.id}
-            className="relative bg-white rounded-2xl shadow-lg p-6 border border-gray-100 
-                       hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
-          >
 
-            {/* Delete button */}
-            <button
-              onClick={() => setConfirmId(r.id)} // trigger confirmation
-              className="absolute top-4 right-4 flex items-center justify-center p-0 m-0 bg-transparent border-none
-             text-gray-400 hover:text-red-500 transition
-             focus:outline-none focus:ring-0 outline-none"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+      <div className="overflow-x-auto bg-white rounded-xl shadow">
+        <table className="min-w-full border-collapse">
 
-            {/* Reading ID */}
-            <div className="flex justify-center items-center gap-2 text-purple-600 text-3xl font-bold mb-4">
-              <Hash className="w-6 h-6" />
-              {r.id}
-            </div>
+          {/* Header */}
+          <thead className="bg-purple-100 text-purple-700">
+            <tr>
+              <th className="px-4 py-3 text-left">ID</th>
+              <th className="px-4 py-3 text-left">Sensor</th>
+              <th className="px-4 py-3 text-left">Type</th>
+              <th className="px-4 py-3 text-left">Value</th>
+              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3 text-left">Time</th>
+              <th className="px-4 py-3 text-left">Description</th>
+              <th className="px-4 py-3 text-center">Action</th>
+            </tr>
+          </thead>
 
-            {/* Sensor */}
-            <div className="flex items-center gap-2 text-gray-700 mb-2">
-              <Cpu className="w-5 h-5 text-purple-400" />
-              Sensor #{r.sensorId}
-            </div>
+          {/* Rows */}
+          <tbody>
+            {readings.map(r => (
+              <tr
+                key={r.id}
+                className="border-t hover:bg-gray-50 transition"
+              >
+                <td className="px-4 py-2 font-semibold">{r.id}</td>
+                <td className="px-4 py-2">{r.sensorId}</td>
+                <td className="px-4 py-2">{r.readingType}</td>
+                <td className="px-4 py-2">{r.readingValue}</td>
+                <td className="px-4 py-2">{r.readingDate}</td>
+                <td className="px-4 py-2">{r.readingTime}</td>
+                <td className="px-4 py-2 truncate max-w-xs">
+                  {r.description}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  <button
+                    onClick={() => setConfirmId(r.id)}
+                    className="flex items-center justify-center bg-transparent
+                        text-gray-400 hover:text-red-500 transition"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
 
-            {/* Type */}
-            <div className="flex items-center gap-2 text-gray-700 mb-4">
-              <Thermometer className="w-5 h-5 text-purple-400" />
-              {r.readingType}
-            </div>
-
-            {/* Value */}
-            <div className="text-4xl font-extrabold text-gray-800">
-              {r.readingValue}
-            </div>
-
-          </div>
-        ))}
+        </table>
       </div>
 
     </div>

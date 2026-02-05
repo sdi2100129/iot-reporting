@@ -19,20 +19,33 @@ export default function Readings() {
     const [searchFilters, setSearchFilters] = useState({
         sensor_type: "",
         location: "",
-        time: "",
-        page: 1
+        time: ""
     });
 
     const [filteredReadings, setFilteredReadings] = useState(null);
+    const [page, setPage] = useState(1);
+    const [pages, setPages] = useState(1);
 
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
 
+    useEffect(() => {
+    if (filteredReadings !== null) {
+        searchReadings();
+    } else {
+        fetchReadings();
+    }
+    }, [page]);
+
+
 
     const fetchReadings = async () => {
         try {
-            const response = await api.get("/readings");
+            const response = await api.get("/readings", {
+            params: { page: page }  
+            });
+            setPages(response.data.pages);
             setReadings(response.data.data);
         } catch (err) {
             const detail = err.response?.data?.detail;
@@ -96,10 +109,11 @@ export default function Readings() {
                 sensor_type: searchFilters.sensor_type || undefined, 
                 location: searchFilters.location || undefined, 
                 time: searchFilters.time || undefined, 
-                page: searchFilters.page } 
+                page: page } 
             });
 
             setFilteredReadings(res.data.data);
+            setPages(res.data.pages)
             setSuccess("Reading found successfully");
             setError(null);   
         } catch (err) {
@@ -163,7 +177,13 @@ export default function Readings() {
         />
 
         <hr />
-        <ReadingList readings={filteredReadings ?? readings} deleteReading={deleteReading} />
+
+        <ReadingList readings={filteredReadings ?? readings} 
+        deleteReading={deleteReading} 
+        page={page}
+        setPage={setPage}
+        pages={pages}
+        />
 
         <br/>
         
