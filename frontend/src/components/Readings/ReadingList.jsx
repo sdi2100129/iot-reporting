@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
+import {ChevronLeft, ChevronRight } from "lucide-react"
 
 export default function ReadingList({ readings, deleteReading, page, setPage, pages  }) {
   const [confirmId, setConfirmId] = useState(null)
@@ -14,13 +15,13 @@ export default function ReadingList({ readings, deleteReading, page, setPage, pa
           <div className="flex gap-2">
             <button
               onClick={() => { deleteReading(confirmId); setConfirmId(null) }}
-              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+              className="!bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
             >
               Yes
             </button>
             <button
               onClick={() => setConfirmId(null)}
-              className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+              className="text-white px-3 py-1 rounded hover:bg-gray-400"
             >
               Cancel
             </button>
@@ -38,9 +39,10 @@ export default function ReadingList({ readings, deleteReading, page, setPage, pa
         <button
           onClick={() => setPage(p => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="px-4 py-2 rounded bg-purple-500 text-white disabled:bg-gray-300"
+          className="flex items-center justify-center bg-transparent
+                        text-gray-400 hover:text-purple-600 transition"
         >
-          Prev
+          <ChevronLeft className="w-5 h-5"/>
         </button>
 
         <span className="text-gray-700 font-semibold">
@@ -50,9 +52,10 @@ export default function ReadingList({ readings, deleteReading, page, setPage, pa
         <button
           onClick={() => setPage(p => Math.min(pages, p + 1))}
           disabled={page === pages}
-          className="px-4 py-2 rounded bg-purple-500 text-white disabled:bg-gray-300"
+          className="flex items-center justify-center bg-transparent
+                        text-gray-400 hover:text-purple-600 transition"
         >
-          Next
+          <ChevronRight className="w-5 h-5"/>
         </button>
 
       </div>
