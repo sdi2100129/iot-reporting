@@ -44,6 +44,8 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
         All Sensors
       </h3>
 
+      <br />
+
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {sensors.map((s) => {
           const isEditing = editingId === s.sensorId;

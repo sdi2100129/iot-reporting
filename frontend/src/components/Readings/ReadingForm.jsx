@@ -17,6 +17,8 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
       <h3 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
         Add Reading
       </h3>
+      
+      <br />
 
       {newReadings.map((reading, index) => (
         <div key={index} className="flex gap-2 flex-wrap items-center">

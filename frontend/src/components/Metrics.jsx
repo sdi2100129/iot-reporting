@@ -98,7 +98,7 @@ export default function Metrics() {
                 <div className="bg-white p-6 rounded shadow-md">
                 <p><strong>Count:</strong> {metrics.count}</p>
                 <p>
-                    <strong>Range:</strong> {metrics.range.min} - {metrics.range.max}
+                    <strong>Range:</strong> from {metrics.range.min} to {metrics.range.max}
                 </p>
                 <p><strong>Mean:</strong> {metrics.mean}</p>
                 <p><strong>Top 10 Max:</strong> {metrics.top10_max.join(", ")}</p>

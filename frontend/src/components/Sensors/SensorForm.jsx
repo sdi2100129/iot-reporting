@@ -18,6 +18,8 @@ export default function SensorForm({ newSensors, setNewSensors, addSensor, updat
         Add Sensor
       </h3>
 
+      <br />
+
       {newSensors.map((sensor, index) => (
         <div key={index} className="flex flex-wrap gap-2"> 
 
