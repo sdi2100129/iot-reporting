@@ -349,31 +349,33 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
 @app.delete("/sensors/{sensorId}")
 def delete_sensor(sensorId: int, db: Session = Depends(get_db)):
     """
-    Deletes a sensor by its ID.
-    If the sensor has readings, deletion is blocked.
+    Deletes a sensor by its ID along with all its readings.
+    If the sensor does not exist, returns 404.
     """
+    # Fetch the sensor
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
     if not db_sensor:
         raise HTTPException(status_code=404, detail="Sensor not found")
 
-    try:
-        db.delete(db_sensor)
-        db.commit()
-        return {
-            "message": "Sensor deleted successfully",
-            "sensorId": sensorId,
-            "sensorType": db_sensor.type,
-            "vendorName": db_sensor.vendorName,
-            "vendorEmail": db_sensor.vendorEmail,
-            "description": db_sensor.description,
-            "location": db_sensor.location
-        }
-    except sqlalchemy.exc.IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete sensor: readings exist for this sensor. Delete readings first."
-        )
+    # Delete all readings associated with this sensor
+    db.query(db_models.SensorReading).filter(
+        db_models.SensorReading.sensorId == sensorId
+    ).delete(synchronize_session=False)
+
+    # Delete the sensor itself
+    db.delete(db_sensor)
+    db.commit()
+
+    return {
+        "message": "Sensor and all its readings deleted successfully",
+        "sensorId": sensorId,
+        "sensorType": db_sensor.type,
+        "vendorName": db_sensor.vendorName,
+        "vendorEmail": db_sensor.vendorEmail,
+        "description": db_sensor.description,
+        "location": db_sensor.location
+    }
+
 
 
 @app.get("/readings/search")
