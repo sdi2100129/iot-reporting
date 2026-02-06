@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 import db_models
 from datetime import date, time
 from fastapi import HTTPException
+import sqlalchemy.exc
 
 
 app = FastAPI()
@@ -77,10 +78,15 @@ SampleReadings = [
     SensorReading(id=6, sensorId=3, readingType="Acoustic", readingValue=70.4, readingDate=date(2025, 2, 1), readingTime=time(15, 0), description="Elevator noise"),
     SensorReading(id=7, sensorId=6, readingType="Acoustic", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room noise"), 
     SensorReading(id=8, sensorId=6, readingType="Acoustic", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room noise"), 
-    SensorReading(id=9, sensorId=4, readingType="Temperature", readingValue=2.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room temperature"), 
-    SensorReading(id=10, sensorId=4, readingType="Temperature", readingValue=-8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Rooftop temperature"), 
-    SensorReading(id=11, sensorId=2, readingType="Humidity", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Lobby humidity"), 
-    SensorReading(id=12, sensorId=5, readingType="Humidity", readingValue=30, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Elevator humidity")
+    SensorReading(id=9, sensorId=4, readingType="Temperature", readingValue=2.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Lobby temperature"), 
+    SensorReading(id=10, sensorId=4, readingType="Temperature", readingValue=-8, readingDate=date(2025, 2, 1), readingTime=time(16, 30), description="Rooftop temperature"), 
+    SensorReading(id=11, sensorId=2, readingType="Humidity", readingValue=65.8, readingDate=date(2025, 4, 4), readingTime=time(16, 50), description="Rooftop humidity"), 
+    SensorReading(id=12, sensorId=5, readingType="Humidity", readingValue=30, readingDate=date(2025, 2, 3), readingTime=time(17, 20), description="Basement humidity"),
+    SensorReading(id=13, sensorId=5, readingType="Humidity", readingValue=30, readingDate=date(2025, 3, 2), readingTime=time(18, 20), description="Basement humidity"),
+    SensorReading(id=14, sensorId=1, readingType="Temperature", readingValue=30, readingDate=date(2025, 4, 1), readingTime=time(19, 20), description="Main Hall temperature"),
+    SensorReading(id=15, sensorId=6, readingType="Acoustic", readingValue=30, readingDate=date(2025, 3, 1), readingTime=time(10, 20), description="Elevator acoustic"),
+    
+
 ]
 
 
@@ -339,28 +345,35 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
     raise HTTPException(status_code=404, detail="Sensor not found")
 
 
+
 @app.delete("/sensors/{sensorId}")
-def delete_sensor(sensorId: int, db : Session = Depends(get_db)):
+def delete_sensor(sensorId: int, db: Session = Depends(get_db)):
     """
     Deletes a sensor by its ID.
-    If the sensor does not exist, returns an error.
+    If the sensor has readings, deletion is blocked.
     """
-
     db_sensor = db.query(db_models.Sensor).filter(db_models.Sensor.sensorId == sensorId).first()
-    if db_sensor:
+    if not db_sensor:
+        raise HTTPException(status_code=404, detail="Sensor not found")
+
+    try:
         db.delete(db_sensor)
         db.commit()
         return {
             "message": "Sensor deleted successfully",
             "sensorId": sensorId,
             "sensorType": db_sensor.type,
-            "vendorName": db_sensor.vendorName, 
+            "vendorName": db_sensor.vendorName,
             "vendorEmail": db_sensor.vendorEmail,
             "description": db_sensor.description,
             "location": db_sensor.location
         }
-    
-    raise HTTPException(status_code=404, detail="Sensor not found") 
+    except sqlalchemy.exc.IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete sensor: readings exist for this sensor. Delete readings first."
+        )
 
 
 @app.get("/readings/search")
