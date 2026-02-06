@@ -68,16 +68,33 @@ Sensors =  [
 ]
 
 
+SampleReadings = [
+    SensorReading(id=1, sensorId=1, readingType="Temperature", readingValue=22.5, readingDate=date(2025, 2, 1), readingTime=time(10, 30), description="Morning temp"),
+    SensorReading(id=2, sensorId=1, readingType="Temperature", readingValue=23.1, readingDate=date(2025, 2, 1), readingTime=time(12, 15), description="Noon temp"),
+    SensorReading(id=3, sensorId=4, readingType="Temperature", readingValue=0, readingDate=date(2025, 2, 1), readingTime=time(9, 45), description="Lobby temp"),
+    SensorReading(id=4, sensorId=2, readingType="Humidity", readingValue=55.2, readingDate=date(2025, 2, 1), readingTime=time(11, 10), description="Rooftop humidity"),
+    SensorReading(id=5, sensorId=5, readingType="Humidity", readingValue=61.0, readingDate=date(2025, 2, 1), readingTime=time(14, 5), description="Basement humidity"),
+    SensorReading(id=6, sensorId=3, readingType="Acoustic", readingValue=70.4, readingDate=date(2025, 2, 1), readingTime=time(15, 0), description="Elevator noise"),
+    SensorReading(id=7, sensorId=6, readingType="Acoustic", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room noise"), 
+    SensorReading(id=8, sensorId=6, readingType="Acoustic", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room noise"), 
+    SensorReading(id=9, sensorId=4, readingType="Temperature", readingValue=2.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room temperature"), 
+    SensorReading(id=10, sensorId=4, readingType="Temperature", readingValue=-8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Rooftop temperature"), 
+    SensorReading(id=11, sensorId=2, readingType="Humidity", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Lobby humidity"), 
+    SensorReading(id=12, sensorId=5, readingType="Humidity", readingValue=30, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Elevator humidity")
+]
+
+
 def init_db():
     """
-    Initializes the database with sample sensor data.
-    Data is inserted only if the sensors table is empty.
+    Initializes the database with sample sensor data and readings.
+    Data is inserted only if the tables are empty.
     """
 
     db = SessionLocal()
 
-    count = db.query(db_models.Sensor).count()
-    if count == 0:
+    # ---- Seed Sensors ----
+    sensor_count = db.query(db_models.Sensor).count()
+    if sensor_count == 0:
         for sensor in Sensors:
             db_sensor = db_models.Sensor(
                 sensorId=sensor.sensorId,
@@ -88,7 +105,23 @@ def init_db():
                 location=sensor.location
             )
             db.add(db_sensor)
-        db.commit()
+
+    # ---- Seed Readings ----
+    reading_count = db.query(db_models.SensorReading).count()
+    if reading_count == 0:
+        for r in SampleReadings:
+            db_reading = db_models.SensorReading(
+                id=r.id,
+                sensorId=r.sensorId,
+                readingType=r.readingType,
+                readingValue=r.readingValue,
+                readingDate=r.readingDate,
+                readingTime=r.readingTime,
+                description=r.description
+            )
+            db.add(db_reading)
+
+    db.commit()
     db.close()
 
 init_db()
