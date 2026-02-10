@@ -2,11 +2,19 @@ import api from "../api";
 import { useState } from "react";
 
 export default function Metrics() {
+    const units = {
+        Temperature: "°C",
+        Humidity: "%",
+        Acoustic: "dB"
+    }
+
     const [filters, setFilters] = useState({
     sensor_type: "",
     location: "",
     time: ""
     });
+
+    const unit = units[filters.sensor_type] || ""
 
     const [metrics, setMetrics] = useState(null);
     const [error, setError] = useState(null);
@@ -92,15 +100,16 @@ export default function Metrics() {
                 <strong>Error:</strong> {error}
                 </div>
             )}
+            
 
             {/* Metrics */}
             {metrics && metrics.range && (
                 <div className="bg-white p-6 rounded shadow-md">
-                <p><strong>Count:</strong> {metrics.count}</p>
+                <p><strong>Count:</strong> {metrics.count} readings matching the filters</p>
                 <p>
-                    <strong>Range:</strong> from {metrics.range.min} to {metrics.range.max}
+                    <strong>Range:</strong> from {metrics.range.min} {unit} to {metrics.range.max} {unit}
                 </p>
-                <p><strong>Mean:</strong> {metrics.mean}</p>
+                <p><strong>Mean:</strong> {metrics.mean} {unit} </p>
                 <p><strong>Top 10 Max:</strong> {metrics.top10_max.join(", ")}</p>
                 <p><strong>Top 10 Min:</strong> {metrics.top10_min.join(", ")}</p>
                 </div>

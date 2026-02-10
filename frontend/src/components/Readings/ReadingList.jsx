@@ -3,6 +3,13 @@ import { useState } from "react"
 import {ChevronLeft, ChevronRight } from "lucide-react"
 
 export default function ReadingList({ readings, deleteReading, page, setPage, pages  }) {
+  const units = {
+    Temperature: "°C",
+    Humidity: "%",
+    Acoustic: "dB"
+  }
+
+
   const [confirmId, setConfirmId] = useState(null)
 
   return (
@@ -89,7 +96,9 @@ export default function ReadingList({ readings, deleteReading, page, setPage, pa
                 <td className="px-4 py-2 font-semibold">{r.id}</td>
                 <td className="px-4 py-2">{r.sensorId}</td>
                 <td className="px-4 py-2">{r.readingType}</td>
-                <td className="px-4 py-2">{r.readingValue}</td>
+                <td className="px-4 py-2">
+                  {r.readingValue} {units[r.readingType] || ""}
+                </td>
                 <td className="px-4 py-2">{r.readingDate}</td>
                 <td className="px-4 py-2">{r.readingTime}</td>
                 <td className="px-4 py-2 truncate max-w-xs">

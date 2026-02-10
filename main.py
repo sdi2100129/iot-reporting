@@ -316,7 +316,6 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
     raise HTTPException(status_code=404, detail="Sensor not found")
 
 
-
 @app.delete("/sensors/{sensorId}")
 def delete_sensor(sensorId: int, db: Session = Depends(get_db)):
     """
@@ -346,7 +345,6 @@ def delete_sensor(sensorId: int, db: Session = Depends(get_db)):
         "description": db_sensor.description,
         "location": db_sensor.location
     }
-
 
 
 @app.get("/readings/search")
