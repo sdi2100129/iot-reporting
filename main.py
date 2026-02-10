@@ -6,6 +6,8 @@ import db_models
 from datetime import date, time
 from fastapi import HTTPException
 import sqlalchemy.exc
+from sampledata.sensors import Sensors
+from sampledata.readings import Readings
 
 
 app = FastAPI()
@@ -58,37 +60,6 @@ def greet():
         
     return {"Hello": "World"}
 
-#   Sample data
-Sensors =  [
-    Sensor(sensorId=1, type="Temperature", vendorName="SensorCorp", vendorEmail="sensorcorp@example.com", description="Temperature sensor in the main hall", location="Main Hall"),
-    Sensor(sensorId=4, type="Temperature", vendorName="TempMasters", vendorEmail="tempmasters@example.com", description="Temperature sensor in the lobby", location="Lobby"),
-    Sensor(sensorId=2, type="Humidity", vendorName="HumidityInc", vendorEmail="humidityinc@example.com", description="Humidity sensor in the rooftop", location="Rooftop"),
-    Sensor(sensorId=5, type="Humidity", vendorName="ClimateControl", vendorEmail="climatecontrol@example.com", description="Humidity sensor in the basement", location="Basement"),
-    Sensor(sensorId=3, type="Acoustic", vendorName="AcousticTech", vendorEmail="acoustictech@example.com", description="Pressure sensor in the elevator", location="Elevator"),
-    Sensor(sensorId=6, type="Acoustic", vendorName="SoundWave", vendorEmail="soundwave@example.com", description="Acoustic sensor in the conference room", location="Conference Room")
-]
-
-
-SampleReadings = [
-    SensorReading(id=1, sensorId=1, readingType="Temperature", readingValue=22.5, readingDate=date(2025, 2, 1), readingTime=time(10, 30), description="Morning temp"),
-    SensorReading(id=2, sensorId=1, readingType="Temperature", readingValue=23.1, readingDate=date(2025, 2, 1), readingTime=time(12, 15), description="Noon temp"),
-    SensorReading(id=3, sensorId=4, readingType="Temperature", readingValue=0, readingDate=date(2025, 2, 1), readingTime=time(9, 45), description="Lobby temp"),
-    SensorReading(id=4, sensorId=2, readingType="Humidity", readingValue=55.2, readingDate=date(2025, 2, 1), readingTime=time(11, 10), description="Rooftop humidity"),
-    SensorReading(id=5, sensorId=5, readingType="Humidity", readingValue=61.0, readingDate=date(2025, 2, 1), readingTime=time(14, 5), description="Basement humidity"),
-    SensorReading(id=6, sensorId=3, readingType="Acoustic", readingValue=70.4, readingDate=date(2025, 2, 1), readingTime=time(15, 0), description="Elevator noise"),
-    SensorReading(id=7, sensorId=6, readingType="Acoustic", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room noise"), 
-    SensorReading(id=8, sensorId=6, readingType="Acoustic", readingValue=65.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Conference room noise"), 
-    SensorReading(id=9, sensorId=4, readingType="Temperature", readingValue=2.8, readingDate=date(2025, 2, 1), readingTime=time(16, 20), description="Lobby temperature"), 
-    SensorReading(id=10, sensorId=4, readingType="Temperature", readingValue=-8, readingDate=date(2025, 2, 1), readingTime=time(16, 30), description="Rooftop temperature"), 
-    SensorReading(id=11, sensorId=2, readingType="Humidity", readingValue=65.8, readingDate=date(2025, 4, 4), readingTime=time(16, 50), description="Rooftop humidity"), 
-    SensorReading(id=12, sensorId=5, readingType="Humidity", readingValue=30, readingDate=date(2025, 2, 3), readingTime=time(17, 20), description="Basement humidity"),
-    SensorReading(id=13, sensorId=5, readingType="Humidity", readingValue=30, readingDate=date(2025, 3, 2), readingTime=time(18, 20), description="Basement humidity"),
-    SensorReading(id=14, sensorId=1, readingType="Temperature", readingValue=30, readingDate=date(2025, 4, 1), readingTime=time(19, 20), description="Main Hall temperature"),
-    SensorReading(id=15, sensorId=6, readingType="Acoustic", readingValue=30, readingDate=date(2025, 3, 1), readingTime=time(10, 20), description="Elevator acoustic"),
-    
-
-]
-
 
 def init_db():
     """
@@ -115,7 +86,7 @@ def init_db():
     # ---- Seed Readings ----
     reading_count = db.query(db_models.SensorReading).count()
     if reading_count == 0:
-        for r in SampleReadings:
+        for r in Readings:
             db_reading = db_models.SensorReading(
                 id=r.id,
                 sensorId=r.sensorId,
