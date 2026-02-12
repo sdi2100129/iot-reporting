@@ -11,6 +11,7 @@ export default function Metrics() {
     const [filters, setFilters] = useState({
     sensor_type: "",
     location: "",
+    date: "", 
     time: ""
     });
 
@@ -25,6 +26,7 @@ export default function Metrics() {
             const res = await api.get("/metrics",{ params: { 
                 sensor_type: filters.sensor_type || undefined, 
                 location: filters.location || undefined, 
+                date: filters.date || undefined,
                 time: filters.time || undefined } 
             });
 
@@ -75,6 +77,13 @@ export default function Metrics() {
                 value={filters.location}
                 onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                 className="border rounded px-3 py-2 flex-1"
+                />
+
+                <input
+                type="date"
+                value={filters.date}
+                onChange={e => setFilters({ ...filters, date: e.target.value })}
+                className="border h-10 px-2 rounded"
                 />
 
                 <input

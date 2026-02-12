@@ -82,20 +82,6 @@ app.add_middleware(
 
 from sqlalchemy import text
 
-def reset_db():
-    """
-    Drops and recreates the public schema of the database.
-    This effectively deletes all tables and data and resets the database.
-    Used only for development/testing.
-    """
-
-    db = SessionLocal()
-    db.execute(text("DROP SCHEMA public CASCADE;"))
-    db.execute(text("CREATE SCHEMA public;"))
-    db.commit()
-    db.close()
-reset_db()
-
 
 #   Convert the classes into tables
 db_models.base.metadata.create_all(bind=engine) 
@@ -401,6 +387,7 @@ def delete_sensor(sensorId: int, db: Session = Depends(get_db)):
 def search_readings(
     sensor_type: str = None,
     location: str = None,
+    date: date = None,  
     time: time = None,
     page: int = 1,
     db: Session = Depends(get_db)
@@ -410,8 +397,9 @@ def search_readings(
     Supports pagination with a default page size of 10.
     1. sensor_type: Filter readings by the type of sensor (e.g., Temperature, Humidity).
     2. location: Filter readings by the location of the sensor (e.g., Main Hall, Lobby).
-    3. time: Filter readings recorded after the specified time.
-    4. page: Specify the page number for pagination (default is 1).
+    3. date: Filter readings from a specific calendar day.
+    4. time: Filter readings recorded after the specified time.
+    5. page: Specify the page number for pagination (default is 1).
     Returns a paginated list of sensor readings matching the filters.
     """
     
@@ -425,6 +413,9 @@ def search_readings(
 
     if location:
         query = query.filter(db_models.Sensor.location == location)
+
+    if date:
+        query = query.filter(db_models.SensorReading.readingDate == date)
 
     if time:
         query = query.filter(db_models.SensorReading.readingTime >= time)
@@ -449,6 +440,7 @@ def search_readings(
 def readings_metrics(
     sensor_type: str = None,
     location: str = None,
+    date: date = None,  
     time: time = None,
     db: Session = Depends(get_db)
 ):
@@ -456,7 +448,8 @@ def readings_metrics(
     Computes metrics on sensor readings based on optional filters: sensor type, location, and time.
     1. sensor_type: Filter readings by the type of sensor (e.g., Temperature, Acoustic, Humidity).
     2. location: Filter readings by the location of the sensor (e.g., Main Hall, Lobby).
-    3. time: Filter readings recorded after the specified time.
+    3. date: Filter readings from a specific calendar day.
+    4. time: Filter readings recorded after the specified time.
     Returns metrics including count, range (min and max), mean, top 10 maximum, and top 10 minimum reading values.  
     """
 
@@ -471,8 +464,11 @@ def readings_metrics(
     if location:
         query = query.filter(db_models.Sensor.location == location)
 
+    if date:
+        query = query.filter(db_models.SensorReading.readingDate == date)
+
     if time:
-        query = query.filter(db_models.SensorReading.readingTime >= time)
+        query = query.filter(db_models.SensorReading.readingTime == time)
 
 
     #   4. Metrics on readingValue of the results

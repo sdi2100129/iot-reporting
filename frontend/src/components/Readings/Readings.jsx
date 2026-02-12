@@ -19,6 +19,7 @@ export default function Readings() {
     const [searchFilters, setSearchFilters] = useState({
         sensor_type: "",
         location: "",
+        date: "", 
         time: ""
     });
 
@@ -108,6 +109,7 @@ export default function Readings() {
             const res = await api.get("/readings/search",{ params: { 
                 sensor_type: searchFilters.sensor_type || undefined, 
                 location: searchFilters.location || undefined, 
+                date: searchFilters.date || undefined,
                 time: searchFilters.time || undefined, 
                 page: page } 
             });

@@ -21,6 +21,13 @@ export default function ReadingSearch({ filters, setFilters, onSearch, onClear }
         onChange={e => setFilters({ ...filters, location: e.target.value })}
         className="border h-10 px-2 rounded"
       />
+      
+      <input
+        type="date"
+        value={filters.date}
+        onChange={e => setFilters({ ...filters, date: e.target.value })}
+        className="border h-10 px-2 rounded"
+      />
 
       <input
         type="time"
