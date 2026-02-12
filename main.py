@@ -8,9 +8,35 @@ from fastapi import HTTPException
 import sqlalchemy.exc
 from sampledata.sensors import Sensors
 from sampledata.readings import Readings
+import logging
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from fastapi import Request
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+logger = logging.getLogger("api")
 
 app = FastAPI()
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error("=== VALIDATION ERROR ===")
+    logger.error(f"URL: {request.url}")
+    logger.error(f"METHOD: {request.method}")
+    logger.error(f"ERRORS: {exc.errors()}")
+    logger.error(f"BODY: {exc.body}")
+    logger.error("========================")
+
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+
 
 from fastapi.middleware.cors import CORSMiddleware
 

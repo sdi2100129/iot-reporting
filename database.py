@@ -13,7 +13,7 @@ db_url = (
     f"{os.getenv('DB_NAME')}"
 )
 
-engine = create_engine(db_url)
+engine = create_engine(db_url, echo=True)
 
 #   Define the database we want to connect with
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
