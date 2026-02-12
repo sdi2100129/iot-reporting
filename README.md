@@ -78,11 +78,24 @@ cp .env.example .env
 ```
 
 3. Edit `.env` and enter your database credentials:
-``` env
+``` env 
 DB_PASSWORD=your_database_password
 ```
 
+### OPTION A: Run using Docker (Recommended)
+4. Build and start containers:
+``` bash
+docker-compose up --build
+```
 
+Access the applications:
+
+Frontend (React UI): http://localhost
+
+Backend (FastAPI Swagger UI): http://localhost:8000/docs
+
+
+### Option B: Run locally without Docker
 4. Create virtual environment:
 ``` bash
 python -m venv venv
@@ -103,11 +116,6 @@ Once running, open:
 Swagger UI: http://127.0.0.1:8000/docs 
 
 
-###   To run tests
-```bash
-PYTHONPATH=. pytest
-```
-
 
 ###   To run frontend
 
@@ -119,6 +127,12 @@ npm run dev
 Once running, open:
 React UI: http://localhost:5173
 
+
+
+###   To run tests
+```bash
+PYTHONPATH=. pytest
+```
 
 
 ##  How to implement each request and what to expect in various cases

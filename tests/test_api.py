@@ -100,6 +100,7 @@ def test_invalid_vendorEmail(clean_db):
     assert response.json()["detail"][0]["loc"] == ["body", "vendorEmail"]
     assert "value is not a valid email address" in response.json()["detail"][0]["msg"]
 
+
 def test_invalid_vendorName(clean_db):
     """
     Sensor creation should fail if vendorName contains invalid characters.
@@ -118,7 +119,6 @@ def test_invalid_vendorName(clean_db):
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "vendorName"]
     assert "vendorName must contain only letters and spaces" in response.json()["detail"][0]["msg"]
-
 
 
 def test_invalid_sensor_type(clean_db):
@@ -284,7 +284,6 @@ def test_future_readingDate(clean_db):
     assert "readingDate cannot be in the future" in response.json()["detail"][0]["msg"]
 
 
-
 def test_get_nonexistent_sensor(clean_db):
     """
     Test that retrieving a non-existent sensor returns a 404 error.
@@ -303,6 +302,7 @@ def test_get_nonexistent_sensor(clean_db):
     response = client.post("/readings/", json=reading)
     assert response.status_code == 404
     assert response.json() == {"detail": "Sensor does not exist"}
+
 
 def test_mismatched_reading_type(clean_db):
     """
