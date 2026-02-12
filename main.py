@@ -23,21 +23,6 @@ logger = logging.getLogger("api")
 
 app = FastAPI()
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.error("=== VALIDATION ERROR ===")
-    logger.error(f"URL: {request.url}")
-    logger.error(f"METHOD: {request.method}")
-    logger.error(f"ERRORS: {exc.errors()}")
-    logger.error(f"BODY: {exc.body}")
-    logger.error("========================")
-
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors()},
-    )
-
-
 from fastapi.middleware.cors import CORSMiddleware
 
 #   Adding Cross Origin Resource Sharing headers to allow sharing resources between applications

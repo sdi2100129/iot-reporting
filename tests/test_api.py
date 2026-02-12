@@ -117,6 +117,8 @@ def test_invalid_vendorName(clean_db):
     response = client.post("/sensors/", json=sensor)
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "vendorName"]
+    assert "vendorName must contain only letters and spaces" in response.json()["detail"][0]["msg"]
+
 
 
 def test_invalid_sensor_type(clean_db):
