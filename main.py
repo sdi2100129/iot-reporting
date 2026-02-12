@@ -11,7 +11,9 @@ from sampledata.readings import Readings
 import logging
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from fastapi import Request
+from fastapi.exceptions import RequestValidationError
 
 
 logging.basicConfig(
@@ -23,10 +25,45 @@ logger = logging.getLogger("api")
 
 app = FastAPI()
 
+
+@app.exception_handler(FastAPIHTTPException)
+async def log_http_exceptions(request: Request, exc: FastAPIHTTPException):
+    logger.warning(
+        f"HTTP {exc.status_code} | {request.method} {request.url.path} | {exc.detail}"
+    )
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def log_validation_errors(request, exc: RequestValidationError):
+    # Convert any non-serializable objects in exc.errors() to strings
+    def make_serializable(e):
+        e_copy = e.copy()
+        if 'ctx' in e_copy:
+            e_copy['ctx'] = {k: str(v) for k, v in e_copy['ctx'].items()}
+        return e_copy
+
+    errors_serializable = [make_serializable(e) for e in exc.errors()]
+
+    logger.warning(
+        f"HTTP 422 | {request.method} {request.url.path} | Validation error: {errors_serializable}"
+    )
+
+    return JSONResponse(
+        status_code=422,
+        content={"detail": errors_serializable},
+    )
+
+
+
 from fastapi.middleware.cors import CORSMiddleware
 
 #   Adding Cross Origin Resource Sharing headers to allow sharing resources between applications
-#   If fastAPI doesn't explicity say yes when another browser is needed for data then browser blocks the response.
+#   If fastAPI does not declare explicity that the browser is allowed to read data from another origin it blocks the response
 origins = [
     "http://localhost:3000",
     "http://localhost:5173"
