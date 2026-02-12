@@ -5,7 +5,7 @@ including filtering, metrics, and CRUD(Create, Read, Update, Deleete) operations
 In fastAPI Create is done with POST request, Read is done with GET request, Update is done with PUT request and Delete with DELETE request.
 
 
-# Features
+## Features
 - CRUD operations for sensors
 - CRUD operations for sensor readings
 - Search readings by type, location, and time
@@ -13,123 +13,158 @@ In fastAPI Create is done with POST request, Read is done with GET request, Upda
 - Automatic API docs with Swagger
 
 
-# Project structure
+## Project structure
+
+```
+├── main.py                         # FastAPI application entrypoint
+├── models.py                       # Pydantic models for request/response validation
+├── db_models.py                    # SQLAlchemy models mapped to database tables
+├── database.py                     # Database connection and session management
+├── Dockerfile                      # Backend Dockerfile
+├── docker-compose.yml
+├── .dockerignnore
+├── requirements.txt                # Python dependencies
 │
-├── backend/
-│   ├── main.py
-│   ├── models.py
-│   ├── db_models.py
-│   ├── database.py
-│   └── ...
+├── tests/
+│   ├──test_api.py                  # Unit tests for API endpoints
 │
 └── frontend/
     ├── src/
-    │   ├── api.js
+    │   ├── api.jsx
+    │   ├── main.jsx
+    │   ├── app.jsx
+    │   ├── app.css
     │   ├── components/
     │   │   ├── Sensors/
     │   │   │   ├── Sensors.jsx
     │   │   │   ├── SensorForm.jsx
-    │   │   │   └── SensorList.jsx
+    │   │   │   ├── SensorList.jsx
+    |   |   |   └──SensorSearch.jsx
     │   │   └── Readings/
     │   │       ├── Readings.jsx
     │   │       ├── ReadingForm.jsx
     │   │       └── ReadingList.jsx
     │   │       └── ReadingSearch.jsx
-    │   │       └── ReadingMetrics.jsx
-    │   └── main.jsx
+    │   │   ├── Footer.jsx
+    │   │   ├── Home.jsx
+    │   │   ├── Metrics.jsx
+    │   │   ├── NavBar.jsx
+    │   ├── Dockerfile
+    │   ├── nginx.conf
+    │   ├── package.json
+    │   ├── vite.config.js
 
-# 🔐 Environment Setup
+```
+
+## Environment Setup
 
 This project uses environment variables for sensitive data (database credentials).
 
 For security reasons, the `.env` file is not included in the repository.
 
 
-# Installation
+### Installation
 
 1. Clone the repository
+``` bash
 git clone https://github.com/aorfanoudaki/iot-reporting-api.git
 cd iot-reporting-api
+```
 
 
 2. Create your own .env file
+``` bash
 cp .env.example .env
+```
 
-3. Edit .env and enter your database credentials:
+3. Edit `.env` and enter your database credentials:
+``` env
 DB_PASSWORD=your_database_password
+```
 
 
 4. Create virtual environment:
+``` bash
 python -m venv venv
 source venv/bin/activate
+```
 
 5. Install dependencies:
+```bash
 pip install -r requirements.txt
+```
 
 
-#   To run back end
-
+###   To run backend
+```bash
 uvicorn main:app --reload
-
+```
 Once running, open:
 Swagger UI: http://127.0.0.1:8000/docs 
 
 
-#   To run tests
-
+###   To run tests
+```bash
 PYTHONPATH=. pytest
+```
 
 
-#   To run frontend
+###   To run frontend
 
-1. cd frontend
-
-2. npm install
-
-3. npm run dev
-
+```bash
+cd frontend
+npm install
+npm run dev
+```
 Once running, open:
 React UI: http://localhost:5173
 
 
 
-#  How to implement each request and what to expect in various cases
+##  How to implement each request and what to expect in various cases
 
-- get_sensors : does not need any parameter and will return all the sensors in the database in JSON format like below:
+- get_sensors : does not need any parameter and will return all the sensors in the database in JSON format like below;
 
 
 - get_sensor_by_id : user inserts an integer which represent the sensor id he is looking for and the execution will return the data stored for this sensor in JSON format like below:
-    {
+```json
+{
     "sensorId": 1,
     "type": "Temperature",
     "vendorName": "Bosch",
     "vendorEmail": "bosch@sensors.com",
     "description": "Temperature sensor",
     "location": "Room A"
-    }
+}
+```
 
 
 - get_readings : does not need any parameter and will return all the readings in the database or a message Sensor not found if there isn't a sensor with this id in the database. 
 
 
 - add_sensor : user gives sensor data (id, type, vendor's name, vendor's email, a description and    the sensor's location).
-    {
+```json
+{
     "sensorId": 1,
     "type": "Temperature",
     "vendorName": "Bosch",
     "vendorEmail": "bosch@sensors.com",
     "description": "Main sensor",
     "location": "Room A"
-    }
-    A message saying "Sensor added successfully" will appear if the task was done or "Sensor with this ID already exists" if sensor with this ID already exists in the database.
-    {
+}
+```
+
+If the 
+
+```json
+{
     "message": "Sensor added successfully"
-    }
+}
+```
 
-
-
-- add_reading : expects a reading insert by the user (including id, the sensor's id, the reading's type, the value it measure, the date the measurement took place and the ). 
-    {
+- add_reading : expects a reading insert by the user like below; 
+```json
+{
     "id": 1,
     "sensorId": 1,
     "readingType": "Temperature",
@@ -137,77 +172,50 @@ React UI: http://localhost:5173
     "readingDate": "2025-02-12",
     "readingTime": "14:32:00",
     "description": "Normal temperature"
-    }
-
-    A message "Reading with this ID already exists" if the id is already used by an other reading saved in the database and so the user should type a different one.
-    {
+}
+```
+And if everything goes as expected it returns;
+```json
+{
     "message": "Reading added successfully"
-    }
+}
+```
 
 
 
-# UI is split in
 
-1. Container components
-    - Sensors.jsx
-    - Readings.jsx
+## Architecture
 
-2.  UI components
-    - SensorForm.jsx
-    - SensorList.jsx
-    - ReadingForm.jsx
-    - ReadingList.jsx
+### Web Framework
+The REST API is implemented using FastAPI, a modern Python web framework designed for building high-performance APIs. FastAPI provides automatic request validation, data serialization, and interactive API documentation via Swagger UI, which significantly improves development speed and reduces human error. The built-in documentation also enables efficient testing of endpoints without requiring a frontend during early development.
 
-Τα API calls βρίσκονται μόνο στα container components.
+### Programming Language
+The backend is written in Python due to its simplicity, strong ecosystem, and excellent compatibility with FastAPI.
+The project dependencies are managed in a Python virtual environment, ensuring consistent package versions, isolation from system-wide installations, and portability across different machines.
 
+### Database
+The system uses PostgreSQL as its relational database. While lightweight alternatives such as SQLite could have been used, PostgreSQL was selected because it supports advanced queries, better concurrency, and production-grade reliability.
+To simplify database interaction, SQLAlchemy is used as the Object-Relational Mapper (ORM), allowing Python classes to be mapped directly to database tables and enabling expressive, maintainable queries.
 
-WEB-FRAMEWORK SELECTION:
-For the implementation of REST API, I chose fastAPI for web framework, because - as a begginer in API's logic - is easy to learn , easy to develop with, as it reduces a significant part of human error and by reviews i read is also high performance, but i didn't test that. Also a huge advantage for me was the swagger UI feature that fastAPI provides that gave me the opportunity to test the responses of my requests without having to also create the front end, unlike flask or django.
+### Operating System
+Development and testing are performed on Linux via WSL, providing better performance, compatibility, and consistency with production environments.
 
-LANGUAGE SELECTION:
-The main programming language i used for the assingment was Python as it is simple, with many healpfull libraries and also works great with fastAPI. More specifically, i load my packages for the project in python Virtual Machine so it can run in other machines as well, not have to deal with conflict due to updates and also reduse the disk storage.
-
-DATABASE LANGUAGE:
-For the database implementation i used postgreSQL. Even if it would be easier for me to just use SQLite that doesn't need installation and connection with server unlike postgreSQL, all in all postegreSQL can handle more advanced queries and is a real production database. For easier develop i combine postgreSQL with SQLALchemy that can convert the python classes in the database tables making the queries easier to implement.
-
-OS SELECTION:
-I run the project in Linux using WSL for compatibility with other machines and better performance.
-
-Re-render όταν αλλάζουν δεδομένα
-FRONT END SELECTION:
-The front end is implemented by React + Vite. Because React give you tools like useState hook to keep sensors and readings, useEffect hook to fetch data from the API and components. Without those tools the implementation would had to be manual.Also used with Axios for HTTP client that works very good with API projects as it auto-parses JSON format and provides error handling.
+### Frontend
+The frontend is built using React with Vite as the build tool. React enables efficient UI development through reusable components and state management via hooks such as useState and useEffect.
+Data is fetched from the API using Axios, which provides automatic JSON parsing, simplified request handling, and built-in error handling, making it well-suited for API-driven applications.
 
 
-DESIGN
-1. Tailwind CSS (Best choice for our case)
-This is what most modern React dashboards use.
+#### UI
+The UI uses Tailwind CSS, which provides:
+- Inline styling directly in JSX, eliminating the need for separate CSS files
+- Utilities for spacing, colors, fonts, shadows, grids, forms, cards, and tables
+- Rapid development of modern, consistent interfaces
 
-Why?
--   You style directly in JSX. No separate .css files
--   You get beautiful spacing, fonts, colors, shadows
--   You can build cards, tables, forms, grids fast
+On top of Tailwind, the project uses a component library (shadcn/ui) to accelerate development of:
+- Buttons
+- Tables
+- Forms
+- Search components
+- Dashboards
 
-
-2. A Component Library on top of Tailwind
-saves weeks of UI work, since you’re building forms, tables, search, dashboards, use:
-
-🔹 shadcn/ui (industry standard)
-
-It gives you:
--   Beautiful buttons
--   Tables
--   Inputs
--   Modals
--   Cards
-
-
-3. Chart library (for readings later)
-Our data is perfect for graphs.
-!!!!!!!!!!!!!!Add later:
-Recharts
-or Chart.js
-
-to display:
-Sensor values over time
-Per sensor type
-Per location
+This combination significantly reduces development time and ensures a modern, professional look.

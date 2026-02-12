@@ -57,7 +57,7 @@ def test_create_sensor(clean_db):
         "description": "Outdoor temperature sensor",
         "location": "Rooftop"
     }
-    response = client.post("/sensor/", json=sensor)
+    response = client.post("/sensors/", json=sensor)
 
     expected_response = {
         "message": "Sensor added successfully",
@@ -72,7 +72,7 @@ def test_create_sensor(clean_db):
     assert response.json() == expected_response  
 
     # Try to add the same sensor again
-    response2 = client.post("/sensor/", json=sensor)
+    response2 = client.post("/sensors/", json=sensor)
 
     # Expect a 400 error for duplicate
     assert response2.status_code == 400
@@ -94,7 +94,7 @@ def test_invalid_vendorEmail(clean_db):
         "location": "Lab"
     }
 
-    response = client.post("/sensor/", json=sensor)
+    response = client.post("/sensors/", json=sensor)
     assert response.status_code == 422
     
     assert response.json()["detail"][0]["loc"] == ["body", "vendorEmail"]
@@ -114,7 +114,7 @@ def test_invalid_vendorName(clean_db):
         "location": "Lab"
     }
 
-    response = client.post("/sensor/", json=sensor)
+    response = client.post("/sensors/", json=sensor)
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "vendorName"]
 
@@ -133,7 +133,7 @@ def test_invalid_sensor_type(clean_db):
         "location": "Lab"
     }
 
-    response = client.post("/sensor/", json=sensor)
+    response = client.post("/sensors/", json=sensor)
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "type"]
 
@@ -151,7 +151,7 @@ def test_missing_fields_sensor(clean_db):
         "location": "Lab"
     }
 
-    response = client.post("/sensor/", json=sensor)
+    response = client.post("/sensors/", json=sensor)
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "type"]
 
@@ -170,7 +170,7 @@ def test_create_reading(clean_db):
         "description": "Outdoor temperature sensor",
         "location": "Rooftop"   
     }
-    client.post("/sensor/", json=sensor)
+    client.post("/sensors/", json=sensor)
 
     reading = {
         "id": 1,
@@ -181,7 +181,7 @@ def test_create_reading(clean_db):
         "readingTime": "12:00:00",
         "description": "Normal reading"
     }
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
     assert response.status_code == 200
     assert response.json() == {
         "message": "Reading added successfully",
@@ -194,7 +194,7 @@ def test_create_reading(clean_db):
         "description": "Normal reading"
     }
 
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
     assert response.status_code == 400
     assert response.json() == {"detail": "Reading with this ID already exists"}
 
@@ -215,7 +215,7 @@ def test_temperature_out_of_range(clean_db):
         "description": "Too hot"
     }
 
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "readingValue"]
 
@@ -235,7 +235,7 @@ def test_invalid_humidity(clean_db):
         "description": "Too humid"
     }
 
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "readingValue"]
 
@@ -255,7 +255,7 @@ def test_invalid_acoustic(clean_db):
         "description": "Too loud"
     }
 
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "readingValue"]  
 
@@ -275,7 +275,7 @@ def test_future_readingDate(clean_db):
         "description": "Future date"
     }
 
-    response = client.post("/reading/", json=payload)
+    response = client.post("/readings/", json=payload)
     assert response.status_code == 422
 
     assert response.json()["detail"][0]["loc"] == ["body", "readingDate"]
@@ -298,7 +298,7 @@ def test_get_nonexistent_sensor(clean_db):
         "description": "Morning reading"
     }
 
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
     assert response.status_code == 404
     assert response.json() == {"detail": "Sensor does not exist"}
 
@@ -316,7 +316,7 @@ def test_mismatched_reading_type(clean_db):
         "description": "Test sensor",
         "location": "Lab"
     }
-    client.post("/sensor/", json=sensor)
+    client.post("/sensors/", json=sensor)
 
     reading = {
         "id": 1,
@@ -328,7 +328,7 @@ def test_mismatched_reading_type(clean_db):
         "description": "Mismatched type"
     }
 
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
     assert response.status_code == 422
     assert response.json() == {"detail": "Reading type does not match sensor type"}
 
@@ -347,7 +347,7 @@ def test_invalid_reading_type(clean_db):
         "description": "Test sensor",
         "location": "Lab"
     }
-    client.post("/sensor/", json=sensor)
+    client.post("/sensors/", json=sensor)
 
     reading = {
         "id": 1,
@@ -359,7 +359,7 @@ def test_invalid_reading_type(clean_db):
         "description": "Invalid type"
     }
 
-    response = client.post("/reading/", json=reading)
+    response = client.post("/readings/", json=reading)
 
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "readingType"]

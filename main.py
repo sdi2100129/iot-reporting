@@ -40,7 +40,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 from fastapi.middleware.cors import CORSMiddleware
 
-#   Adding cors headers to allow sharing resources between applications
+#   Adding Cross Origin Resource Sharing headers to allow sharing resources between applications
+#   If fastAPI doesn't explicity say yes when another browser is needed for data then browser blocks the response.
 origins = [
     "http://localhost:3000",
     "http://localhost:5173"
@@ -49,6 +50,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
+    #   who is allowed to call me
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
