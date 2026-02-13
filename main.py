@@ -418,7 +418,7 @@ def search_readings(
         query = query.filter(db_models.SensorReading.readingDate == date)
 
     if time:
-        query = query.filter(db_models.SensorReading.readingTime >= time)
+        query = query.filter(db_models.SensorReading.readingTime == time)
 
     page_size = 10
     total = query.count()

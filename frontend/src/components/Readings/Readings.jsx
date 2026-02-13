@@ -40,7 +40,6 @@ export default function Readings() {
     }, [page]);
 
 
-
     const fetchReadings = async () => {
         try {
             const response = await api.get("/readings", {
@@ -84,7 +83,7 @@ export default function Readings() {
         }
     };
 
-
+    
     // Delete 
     const deleteReading = async (readingId) => {
         try {
@@ -103,7 +102,6 @@ export default function Readings() {
 
 
     // Search
-
     const searchReadings = async () => {
         try {
             const res = await api.get("/readings/search",{ params: { 
@@ -116,7 +114,13 @@ export default function Readings() {
 
             setFilteredReadings(res.data.data);
             setPages(res.data.pages)
-            setSuccess("Reading found successfully");
+            if (res.data.data.length > 0) {
+                setSuccess("Reading found successfully");
+                setError(null);
+            } else {
+                setSuccess(null);
+                setError("No readings found for the selected filters");
+            }
             setError(null);   
         } catch (err) {
             const detail = err.response?.data?.detail;
@@ -131,9 +135,18 @@ export default function Readings() {
 
 
     const clearSearch = () => {
-        setFilteredReadings(null);
+        setSearchFilters({
+            sensor_type: "",
+            location: "",
+            date: "",
+            time: ""
+        });
+        setFilteredReadings(null); // remove search filter
+        setPage(1); // reset to first page
+        fetchReadings(); // fetch full list for first page
+        setError(null);
+        setSuccess(null);
     };
-
 
 
     // UI  -
@@ -158,6 +171,13 @@ export default function Readings() {
             </div>
         )}
 
+        {/* No results found */}
+        {filteredReadings?.length === 0 && (
+        <div className="bg-yellow-100 border border-yellow-500 text-yellow-700 px-4 py-3 rounded mb-4">
+            No readings found for the selected filters
+        </div>
+        )}
+
         <h1 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
             Sensor Readings
         </h1>
@@ -179,6 +199,7 @@ export default function Readings() {
         />
 
         <hr />
+
 
         <ReadingList readings={filteredReadings ?? readings} 
         deleteReading={deleteReading} 
