@@ -26,6 +26,64 @@ logging.basicConfig(
 
 logger = logging.getLogger("api")
 
+
+#def reset_db():
+#    """
+#    Deletes ALL data from the database and reloads Sensors and Readings
+#    from the sampledata files.
+#    """
+#
+#    db = SessionLocal()
+#
+#    try:
+        # ⚠️ Σειρά έχει σημασία (FK constraint)
+#        db.query(db_models.SensorReading).delete()
+#        db.query(db_models.Sensor).delete()
+#
+#        db.commit()
+#
+#        logger.info("Database cleared")
+#
+#        # ---- Re-seed Sensors ----
+#        for sensor in Sensors:
+#            db_sensor = db_models.Sensor(
+#                sensorId=sensor.sensorId,
+#                type=sensor.type,
+#                vendorName=sensor.vendorName,
+#                vendorEmail=sensor.vendorEmail,
+#                description=sensor.description,
+#                location=sensor.location
+#            )
+#            db.add(db_sensor)
+#
+#        # ---- Re-seed Readings ----
+#        for r in Readings:
+#            db_reading = db_models.SensorReading(
+#                id=r.id,
+#                sensorId=r.sensorId,
+#                readingType=r.readingType,
+#                readingValue=r.readingValue,
+#                readingDate=r.readingDate,
+#                readingTime=r.readingTime,
+#                description=r.description
+#            )
+#            db.add(db_reading)
+#
+#        db.commit()
+#        logger.info("Database re-seeded")
+#
+#    except Exception as e:
+#        db.rollback()
+#        logger.error(f"Reset failed: {e}")
+#        raise
+#
+#    finally:
+#        db.close()
+
+#reset_db()
+
+
+
 def init_db():
     """
     Initializes the database with sample sensor data and readings.
@@ -65,7 +123,6 @@ def init_db():
 
     db.commit()
     db.close()
-
 
 
 @asynccontextmanager

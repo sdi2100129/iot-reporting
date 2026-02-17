@@ -47,13 +47,11 @@ export default function SensorForm({ newSensors, setNewSensors, addSensor, updat
             )
           ))}
 
-          <div className="flex gap-4 mt-4">
+          <div className="w-full flex justify-center items-center gap-4 mt-4">
             <button onClick={() => addSensor(sensor)} className="!bg-blue-500 !text-white px-4 py-2 rounded hover:bg-blue-700 transition">
               Add
             </button>
-            <button onClick={() => updateSensor(sensor)} className="!bg-green-500 !text-white px-4 py-2 rounded hover:bg-green-700 transition">
-              Update
-            </button>
+            {/* UPDATE */}
           </div>
 
         </div>
@@ -61,3 +59,8 @@ export default function SensorForm({ newSensors, setNewSensors, addSensor, updat
     </div>
   )
 }
+
+
+//#            <button onClick={() => updateSensor(sensor)} className="!bg-green-500 !text-white px-4 py-2 rounded hover:bg-green-700 transition">
+//#               Update
+//#             </button>

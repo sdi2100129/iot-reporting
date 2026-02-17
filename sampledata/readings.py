@@ -1,6 +1,10 @@
 from models import SensorReading
 from datetime import date, time, timedelta
 import random
+from sampledata.sensors import Sensors
+
+# Dictionary to map sensor id with each location value
+sensor_location = {s.sensorId: s.location for s in Sensors}
 
 Readings = []
 
@@ -25,18 +29,10 @@ for day in range(days):
             reading_type = "Acoustic"
             value = round(random.uniform(60.0, 75.0), 1)
 
-        if locationId == 0:
-            location = "Main Hall"
-        elif locationId == 1:
-            location = "Rooftop"
-        elif locationId == 2:
-            location = "Elevator"
-        elif locationId == 3:
-            location = "Lobby"
-        else:
-            location = "Conference hall"
+
+        location = sensor_location[sensor_id]
         
-        
+
         # Random times for morning, noon, evening
         for hour in [9, 12, 15]:
             reading = SensorReading(
