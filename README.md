@@ -2,7 +2,7 @@
 
 A full-stack system for managing Sensors and Readings in an IoT environment,
 including filtering, metrics, and CRUD(Create, Read, Update, Deleete) operations.
-In fastAPI Create is done with POST request, Read is done with GET request, Update is done with PUT request and Delete with DELETE request.
+In FastAPI Create is done with POST request, Read is done with GET request, Update is done with PUT request and Delete with DELETE request.
 
 
 ## Features
@@ -40,11 +40,11 @@ In fastAPI Create is done with POST request, Read is done with GET request, Upda
     │   │   │   ├── SensorForm.jsx
     │   │   │   ├── SensorList.jsx
     |   |   |   └──SensorSearch.jsx
-    │   │   └── Readings/
-    │   │       ├── Readings.jsx
-    │   │       ├── ReadingForm.jsx
-    │   │       └── ReadingList.jsx
-    │   │       └── ReadingSearch.jsx
+    │   │   │── Readings/
+    │   │   │   ├── Readings.jsx
+    │   │   │   ├── ReadingForm.jsx
+    │   │   │   └── ReadingList.jsx
+    │   │   │   └── ReadingSearch.jsx
     │   │   ├── Footer.jsx
     │   │   ├── Home.jsx
     │   │   ├── Metrics.jsx
@@ -83,9 +83,19 @@ DB_PASSWORD=your_database_password
 ```
 
 ### OPTION A: Run using Docker (Recommended)
-4. Build and start containers:
+Check if you have Docker using the command:
+
 ``` bash
-docker-compose up --build
+docker --version
+```
+
+If not, install Docker app from:
+https://www.docker.com/ .Then
+
+4. Build and start containers:
+
+``` bash
+docker compose up --build
 ```
 
 Access the applications:
@@ -97,18 +107,21 @@ Backend (FastAPI Swagger UI): http://localhost:8000/docs
 
 ### Option B: Run locally without Docker
 4. Create virtual environment:
+
 ``` bash
 python -m venv venv
 source venv/bin/activate
 ```
 
 5. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 
 ###   To run backend
+
 ```bash
 uvicorn main:app --reload
 ```
@@ -119,17 +132,26 @@ Swagger UI: http://127.0.0.1:8000/docs
 
 ###   To run frontend
 
+Install npm:
+
 ```bash
 cd frontend
 npm install
+```
+
+And run:
+
+```bash
 npm run dev
 ```
+
 Once running, open:
 React UI: http://localhost:5173
 
 
 
 ###   To run tests
+
 ```bash
 PYTHONPATH=. pytest
 ```
@@ -139,8 +161,16 @@ PYTHONPATH=. pytest
 
 - get_sensors : does not need any parameter and will return all the sensors in the database in JSON format like below;
 
+```json
+{
+    "success": True,
+    "count": len(db_sensors),
+    "data": db_sensors
+}
+```
 
 - get_sensor_by_id : user inserts an integer which represent the sensor id he is looking for and the execution will return the data stored for this sensor in JSON format like below:
+
 ```json
 {
     "sensorId": 1,
@@ -168,7 +198,7 @@ PYTHONPATH=. pytest
 }
 ```
 
-If the 
+and the corresponding success notification message
 
 ```json
 {
@@ -177,6 +207,7 @@ If the
 ```
 
 - add_reading : expects a reading insert by the user like below; 
+
 ```json
 {
     "id": 1,
@@ -188,7 +219,8 @@ If the
     "description": "Normal temperature"
 }
 ```
-And if everything goes as expected it returns;
+And if everything goes as expected it also returns the message;
+
 ```json
 {
     "message": "Reading added successfully"

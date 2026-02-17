@@ -9,10 +9,10 @@ export default function Metrics() {
     }
 
     const [filters, setFilters] = useState({
-    sensor_type: "",
-    location: "",
-    date: "", 
-    time: ""
+        sensor_type: "",
+        location: "",
+        date: "", 
+        time: ""
     });
 
     const unit = units[filters.sensor_type] || ""
@@ -62,7 +62,10 @@ export default function Metrics() {
 
                 <select
                     value={filters.sensor_type}
-                    onChange={e => setFilters({ ...filters, sensor_type: e.target.value })}
+                    onChange={e => {
+                        setFilters({ ...filters, sensor_type: e.target.value });
+                        setMetrics(null); // reset metrics when type changes
+                    }}
                     className="border h-10 px-2 rounded"
                 >
                     <option value="">All Types</option>
@@ -72,26 +75,35 @@ export default function Metrics() {
                 </select>
 
                 <input
-                type="text"
-                placeholder="Location"
-                value={filters.location}
-                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                className="border rounded px-3 py-2 flex-1"
+                    type="text"
+                    placeholder="Location"
+                    value={filters.location}
+                    onChange={(e) => {
+                        setFilters({ ...filters, location: e.target.value });
+                        setMetrics(null); // reset metrics
+                    }}
+                    className="border rounded px-3 py-2 flex-1"
                 />
 
                 <input
-                type="date"
-                value={filters.date}
-                onChange={e => setFilters({ ...filters, date: e.target.value })}
-                className="border h-10 px-2 rounded"
+                    type="date"
+                    value={filters.date}
+                    onChange={(e) => {
+                        setFilters({ ...filters, date: e.target.value });
+                        setMetrics(null); // reset metrics
+                    }}
+                    className="border h-10 px-2 rounded"
                 />
 
                 <input
-                type="time"
-                placeholder="Time"
-                value={filters.time}
-                onChange={(e) => setFilters({ ...filters, time: e.target.value })}
-                className="border rounded px-3 py-2 flex-1"
+                    type="time"
+                    placeholder="Time"
+                    value={filters.time}
+                    onChange={(e) => {
+                        setFilters({ ...filters, time: e.target.value });
+                        setMetrics(null); // reset metrics
+                    }}
+                    className="border rounded px-3 py-2 flex-1"
                 />
 
                 <button
@@ -111,26 +123,29 @@ export default function Metrics() {
             )}
             
 
-            {/* Metrics */}
-            {metrics && metrics.range && (
-                <div className="bg-white p-6 rounded shadow-md">
-                <p><strong>Count:</strong> {metrics.count} readings matching the filters</p>
-                <p>
-                    <strong>Range:</strong> from {metrics.range.min} {unit} to {metrics.range.max} {unit}
-                </p>
-                <p><strong>Mean:</strong> {metrics.mean} {unit} </p>
-                <p><strong>Top 10 Max:</strong> {metrics.top10_max.join(", ")}</p>
-                <p><strong>Top 10 Min:</strong> {metrics.top10_min.join(", ")}</p>
+            {metrics && Object.keys(metrics.data).length > 0 && (
+            <div className="space-y-6">
+                {Object.entries(metrics.data).map(([type, data]) => (
+                <div key={type} className="bg-white p-6 rounded shadow-md">
+                    <h2 className="text-xl font-bold mb-2">{type}</h2>
+                    <p><strong>Count:</strong> {data.count}</p>
+                    <p>
+                    <strong>Range:</strong> From {data.range.min} {units[type] || ""} to {data.range.max} {units[type] || ""}
+                    </p>
+                    <p><strong>Mean:</strong> {data.mean} {units[type] || ""}</p>
+                    <p><strong>Top 10 Max:</strong> {data.top10_max.join(", ")}</p>
+                    <p><strong>Top 10 Min:</strong> {data.top10_min.join(", ")}</p>
                 </div>
+                ))}
+            </div>
             )}
 
-            {metrics && !metrics.range && (
-                <div className="bg-yellow-100 border border-yellow-500 text-yellow-700 px-4 py-3 rounded mb-4">
+            {metrics && Object.keys(metrics.data).length === 0 && (
+            <div className="bg-yellow-100 border border-yellow-500 text-yellow-700 px-4 py-3 rounded mb-4">
                 No readings match your filters.
             </div>
-
-
             )}
+
 
         
         </div>

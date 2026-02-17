@@ -14,6 +14,9 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
+from contextlib import asynccontextmanager
+from collections import defaultdict
+from datetime import timedelta, datetime
 
 
 logging.basicConfig(
@@ -23,7 +26,55 @@ logging.basicConfig(
 
 logger = logging.getLogger("api")
 
-app = FastAPI()
+def init_db():
+    """
+    Initializes the database with sample sensor data and readings.
+    Data is inserted only if the tables are empty.
+    """
+
+    db = SessionLocal()
+
+    # ---- Seed Sensors ----
+    sensor_count = db.query(db_models.Sensor).count()
+    if sensor_count == 0:
+        for sensor in Sensors:
+            db_sensor = db_models.Sensor(
+                sensorId=sensor.sensorId,
+                type=sensor.type,
+                vendorName=sensor.vendorName,
+                vendorEmail=sensor.vendorEmail,
+                description=sensor.description,
+                location=sensor.location
+            )
+            db.add(db_sensor)
+
+    # ---- Seed Readings ----
+    reading_count = db.query(db_models.SensorReading).count()
+    if reading_count == 0:
+        for r in Readings:
+            db_reading = db_models.SensorReading(
+                id=r.id,
+                sensorId=r.sensorId,
+                readingType=r.readingType,
+                readingValue=r.readingValue,
+                readingDate=r.readingDate,
+                readingTime=r.readingTime,
+                description=r.description
+            )
+            db.add(db_reading)
+
+    db.commit()
+    db.close()
+
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield   # app runs here
+    # shutdown logic 
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.exception_handler(FastAPIHTTPException)
@@ -95,49 +146,6 @@ def greet():
     """
         
     return {"Hello": "World"}
-
-
-def init_db():
-    """
-    Initializes the database with sample sensor data and readings.
-    Data is inserted only if the tables are empty.
-    """
-
-    db = SessionLocal()
-
-    # ---- Seed Sensors ----
-    sensor_count = db.query(db_models.Sensor).count()
-    if sensor_count == 0:
-        for sensor in Sensors:
-            db_sensor = db_models.Sensor(
-                sensorId=sensor.sensorId,
-                type=sensor.type,
-                vendorName=sensor.vendorName,
-                vendorEmail=sensor.vendorEmail,
-                description=sensor.description,
-                location=sensor.location
-            )
-            db.add(db_sensor)
-
-    # ---- Seed Readings ----
-    reading_count = db.query(db_models.SensorReading).count()
-    if reading_count == 0:
-        for r in Readings:
-            db_reading = db_models.SensorReading(
-                id=r.id,
-                sensorId=r.sensorId,
-                readingType=r.readingType,
-                readingValue=r.readingValue,
-                readingDate=r.readingDate,
-                readingTime=r.readingTime,
-                description=r.description
-            )
-            db.add(db_reading)
-
-    db.commit()
-    db.close()
-
-init_db()
 
 
 def get_db():
@@ -415,10 +423,23 @@ def search_readings(
         query = query.filter(db_models.Sensor.location == location)
 
     if date:
-        query = query.filter(db_models.SensorReading.readingDate == date)
+        query = query.filter(
+            db_models.SensorReading.readingDate >= date,
+            db_models.SensorReading.readingDate < date + timedelta(days=1)
+        )
 
     if time:
-        query = query.filter(db_models.SensorReading.readingTime == time)
+        if not date:
+            raise HTTPException(400, "Time filter requires date")
+
+        start = time
+        end = (datetime.combine(date, time) + timedelta(minutes=1)).time()
+
+        query = query.filter(
+            db_models.SensorReading.readingTime >= start,
+            db_models.SensorReading.readingTime < end
+        )
+
 
     page_size = 10
     total = query.count()
@@ -465,34 +486,58 @@ def readings_metrics(
         query = query.filter(db_models.Sensor.location == location)
 
     if date:
-        query = query.filter(db_models.SensorReading.readingDate == date)
+        query = query.filter(
+            db_models.SensorReading.readingDate >= date,
+            db_models.SensorReading.readingDate < date + timedelta(days=1)
+        )
 
     if time:
-        query = query.filter(db_models.SensorReading.readingTime == time)
+        if not date:
+            raise HTTPException(400, "Time filter requires date")
+
+        start = time
+        end = (datetime.combine(date, time) + timedelta(minutes=1)).time()
+
+        query = query.filter(
+            db_models.SensorReading.readingTime >= start,
+            db_models.SensorReading.readingTime < end
+        )
 
 
-    #   4. Metrics on readingValue of the results
-    values = [r.readingValue for r in query.all()]
+    readings = query.all()
 
-    if not values:
+    if not readings:
         return {
-            "count": 0,
-            "range": None,
-            "mean": None,
-            "top10_max": [],
-            "top10_min": []
-    }
+            "success": True, 
+            "data": {}, 
+            "count": 0
+        }
 
-    values_sorted = sorted(values)
+    # Always group by type
+    values_by_type = defaultdict(list)
+
+    for r in readings:
+        values_by_type[r.readingType].append(r.readingValue)
+
+    metrics_by_type = {}
+
+    for t, vals in values_by_type.items():
+        vals_sorted = sorted(vals)
+        metrics_by_type[t] = {
+            "count": len(vals),
+            "range": {
+                "min": min(vals),
+                "max": max(vals)
+            },
+            "mean": round(sum(vals) / len(vals), 1),
+            "top10_max": vals_sorted[-10:][::-1],
+            "top10_min": vals_sorted[:10]
+        }
 
     return {
-        "count": len(values),
-        "range": {
-            "min": min(values),
-            "max": max(values)
-        },
-        "mean": sum(values) / len(values),
-        "top10_max": values_sorted[-10:][::-1],
-        "top10_min": values_sorted[:10]
+        "success": True,
+        "data": metrics_by_type,
+        "count": len(readings)
     }
+
 

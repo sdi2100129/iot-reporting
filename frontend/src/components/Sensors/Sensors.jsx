@@ -125,29 +125,18 @@ export default function Sensors() {
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded mb-4">
-          <strong>Error:</strong>{" "}
-          {typeof error === "string" ? error : JSON.stringify(error)}
-          <button
-            className="float-right font-bold text-red-800"
-            onClick={() => setError(null)}
-          >
-            ✕
-          </button>
-        </div>
+          <div className="flex items-center justify-between bg-red-100 border border-red-500 text-red-700 px-4 py-3 rounded mb-4">
+          <strong>Error:</strong> {typeof error === "string" ? error : JSON.stringify(error)}
+          <button className="flex items-center justify-center bg-white !bg-white text-red-800" onClick={() => setError(null)}>✕</button>
+          </div>
       )}
 
       {/* Success Banner */}
       {success && (
-        <div className="bg-green-100 border border-green-500 text-green-700 px-4 py-3 rounded mb-4">
+          <div className="flex items-center justify-between bg-green-100 border border-green-500 text-green-700 px-4 py-3 rounded mb-4">
           <strong>Success:</strong> {success}
-          <button
-            className="float-right font-bold text-green-800"
-            onClick={() => setSuccess(null)}
-          >
-            ✕
-          </button>
-        </div>
+          <button className="flex items-center justify-center !bg-white text-green-800" onClick={() => setSuccess(null)}>✕</button>
+          </div>
       )}
 
 
