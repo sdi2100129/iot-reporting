@@ -1,12 +1,16 @@
 import { Trash2, Edit3, Cpu, MapPin, Mail, FileText, Check } from "lucide-react";
 import { useState } from "react";
-
+ 
 export default function SensorList({ sensors, deleteSensor, updateSensor }) {
+  //  Keeps trach if the confirmation button was pressed 
   const [confirmId, setConfirmId] = useState(null);
+  //  Keeps track of which sensor is being edited
   const [editingId, setEditingId] = useState(null);
+  //  Stores the current edited field values
   const [editingValues, setEditingValues] = useState({});
 
   const handleChange = (field, value) => {
+    // Every time a field is in edit mode take the previous editingValues and replace the field with the new value
     setEditingValues(prev => ({ ...prev, [field]: value }));
   };
 

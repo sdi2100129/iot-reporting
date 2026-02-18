@@ -36,7 +36,7 @@ logger = logging.getLogger("api")
 #    db = SessionLocal()
 #
 #    try:
-        # ⚠️ Σειρά έχει σημασία (FK constraint)
+        # Σειρά έχει σημασία
 #        db.query(db_models.SensorReading).delete()
 #        db.query(db_models.Sensor).delete()
 #
@@ -83,7 +83,6 @@ logger = logging.getLogger("api")
 #reset_db()
 
 
-
 def init_db():
     """
     Initializes the database with sample sensor data and readings.
@@ -123,6 +122,7 @@ def init_db():
 
     db.commit()
     db.close()
+
 
 
 @asynccontextmanager

@@ -5,7 +5,10 @@ import ReadingSearch from "./ReadingSearch.jsx";
 import api from "../../api";
 
 export default function Readings() {
+    // To show what readings our database currently have.
     const [readings, setReadings] = useState([]);
+
+    // To implement the add functionality in readings. Keeps the inputs of the user.
     const [newReadings, setNewReadings] = useState([
         { id: "", 
         sensorId: "",
@@ -16,6 +19,7 @@ export default function Readings() {
         description: "" }
     ]);
 
+    // To implement the search functionality in readings
     const [searchFilters, setSearchFilters] = useState({
         sensor_type: "",
         location: "",
@@ -23,10 +27,16 @@ export default function Readings() {
         time: ""
     });
 
+    // To show readings' list based on filters
     const [filteredReadings, setFilteredReadings] = useState(null);
+
+    // To show in which page we currently are
     const [page, setPage] = useState(1);
+
+    // To show how many pages there are
     const [pages, setPages] = useState(1);
 
+    // To show Success or Error status
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 

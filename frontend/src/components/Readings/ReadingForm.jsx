@@ -4,12 +4,12 @@ export default function ReadingForm({ newReadings, setNewReadings, addReading })
   const fields = ["id", "sensorId", "readingType", "readingValue", "readingDate", "readingTime", "description"];
 
   const handleInputChange = (index, field, value) => {
-    const updatedReadings = [...newReadings];
-    updatedReadings[index] = {
-      ...updatedReadings[index],
-      [field]: value
+    const updatedReadings = [...newReadings];        // copy array
+    updatedReadings[index] = {                       // pick the correct row
+      ...updatedReadings[index],                     // keep old fields
+      [field]: value                                 // overwrite just one field
     };
-    setNewReadings(updatedReadings);
+    setNewReadings(updatedReadings);                 // update state
   };
 
   return (
