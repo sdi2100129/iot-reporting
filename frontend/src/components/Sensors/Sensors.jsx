@@ -85,6 +85,8 @@ export default function Sensors() {
         try {
       await api.delete(`/sensors/${id}`)
       setSensors(sensors.filter(s => s.sensorId !== id))
+      // if in search mode, clean it too
+      setFilteredSensors(prev => prev ? prev.filter(s => s.sensorId !== id) : null)
       setSuccess(`Sensor ${id} deleted successfully`)
     } catch (err) {
       const detail = err.response?.data?.detail;

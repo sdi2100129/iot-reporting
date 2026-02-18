@@ -98,7 +98,13 @@ export default function Readings() {
     const deleteReading = async (readingId) => {
         try {
             const res = await api.delete(`/readings/${readingId}`);
-            fetchReadings();
+            //fetchReadings();
+             // remove from normal list
+            setReadings(prev => prev.filter(r => r.id !== readingId));
+            // remove from filtered list if we are in search mode
+            setFilteredReadings(prev =>
+            prev ? prev.filter(r => r.id !== readingId) : null
+            );
             setSuccess("Reading deleted successfully");
         } catch (err) {
             const detail = err.response?.data?.detail;
