@@ -34,6 +34,9 @@ services:
       - backend
     ports:
       - "80:80"   # users visit localhost
+      - "443:443"
+    volumes:
+      - ./nginx-certs:/etc/nginx-certs
 
 volumes:
   postgres_data:

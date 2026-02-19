@@ -598,3 +598,11 @@ def readings_metrics(
     }
 
 
+@app.get("/readings/all")
+def get_all_readings(sensor_type: str = None, location: str = None, db: Session = Depends(get_db)):
+    query = db.query(db_models.SensorReading).join(db_models.Sensor, db_models.Sensor.sensorId == db_models.SensorReading.sensorId)
+    if sensor_type:
+        query = query.filter(db_models.Sensor.type == sensor_type)
+    if location:
+        query = query.filter(db_models.Sensor.location == location)
+    return {"success": True, "data": query.all()}

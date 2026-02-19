@@ -53,6 +53,18 @@ export default function NavBar() {
           Metrics
         </NavLink>
 
+        <NavLink
+            to="/charts"
+            className={({ isActive }) =>
+                `px-4 py-2 rounded-md font-semibold text-lg transition
+                ${isActive
+                ? "bg-purple-600 text-white"
+                : "bg-purple-800 text-white hover:bg-purple-700"}`
+            }
+        >
+          Charts
+        </NavLink>
+
       </div>
     </div>
   );
