@@ -165,8 +165,9 @@ export default function Charts() {
         </div>
         )}
 
-        {/* Mean Bar Chart */}
-        {readings.length > 0 && (
+
+        {/* Grouped Horizontal Bar Chart */}
+        {groupedData.length > 0 && (
         <div className="mb-10 bg-white p-4 rounded shadow-md">
             <h2 className="text-xl font-bold mb-2">Mean per Sensor Type</h2>
             <ResponsiveContainer width="100%" height={300}>
