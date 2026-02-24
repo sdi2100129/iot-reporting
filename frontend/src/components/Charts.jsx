@@ -5,6 +5,9 @@ import {
   Scatter,
   BarChart,
   Bar,
+  PieChart, 
+  Pie, 
+  Cell,
   LineChart,
   Line,
   XAxis,
@@ -14,8 +17,6 @@ import {
   Legend,
   ResponsiveContainer
 } from "recharts";
-
-import { PieChart, Pie, Cell } from "recharts";
 
 
 const units = {
@@ -119,7 +120,7 @@ export default function Charts() {
     readings
         .filter(r => r.readingType === "Temperature")
         .forEach(r => {
-        const date = r.readingDate; // μόνο date
+        const date = r.readingDate; // only date
         const location = sensorMap[r.sensorId] || "Unknown";
 
         if (!map[date]) {
@@ -138,7 +139,7 @@ export default function Charts() {
 
         Object.keys(entry).forEach(key => {
             if (key !== "datetime") {
-            result[key] = mean(entry[key]);   // 👈 εδώ
+            result[key] = mean(entry[key]);  
             }
         });
 
