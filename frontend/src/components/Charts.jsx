@@ -85,9 +85,8 @@ export default function Charts() {
         : 0;
 
     // Step 1: Group readings by location
-    const groupedData = Object.values(
-    readings.reduce((acc, r) => {
-
+    const map = Object.values(
+        readings.reduce((acc, r) => {
         const loc = sensorMap[r.sensorId] || "Unknown";
 
         if (!acc[loc]) {
