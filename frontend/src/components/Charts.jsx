@@ -78,109 +78,120 @@ export default function Charts() {
     }, [sensors]);
 
 
-    // Grouped data: mean per sensor type per location
     const mean = (arr) =>
-    arr.length
-        ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1))
-        : 0;
+        arr.length
+    ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1))
+    : 0;
 
-    // Step 1: Group readings by location
-    const map = Object.values(
-        readings.reduce((acc, r) => {
-        const loc = sensorMap[r.sensorId] || "Unknown";
+    
+    // Grouped data: mean per sensor type per location
+    const groupedData = useMemo(() => {
+        // Step 1: Group readings by location
+        const map = Object.values(
+            readings.reduce((acc, r) => {
+            const loc = sensorMap[r.sensorId] || "Unknown";
 
-        if (!acc[loc]) {
-        acc[loc] = {
-            location: loc,
-            Temperature: [],
-            Humidity: [],
-            Acoustic: []
-        };
-        }
+            if (!acc[loc]) {
+                acc[loc] = {
+                location: loc,
+                Temperature: [],
+                Humidity: [],
+                Acoustic: []
+                };
+            }
 
-        acc[loc][r.readingType].push(r.readingValue);
+            acc[loc][r.readingType].push(r.readingValue);
 
-        return acc;
-    }, {})
-    )
-    // Step 2: Convert arrays → means
-    .map(loc => ({
-        location: loc.location,
-        Temperature: mean(loc.Temperature),
-        Humidity: mean(loc.Humidity),
-        Acoustic: mean(loc.Acoustic)
-    }));
+            return acc;
+            }, {})
+        );
+
+        // Step 2: Convert arrays → means
+        return map.map(loc => ({
+            location: loc.location,
+            Temperature: mean(loc.Temperature),
+            Humidity: mean(loc.Humidity),
+            Acoustic: mean(loc.Acoustic)
+        }));
+
+    }, [readings, sensorMap]);
 
 
     //  Mean temperature per day per location
     const multiLocationData = useMemo(() => {
-    const map = {};
+        const map = {};
 
-    readings
-        .filter(r => r.readingType === "Temperature")
-        .forEach(r => {
-        const date = r.readingDate; // only date
-        const location = sensorMap[r.sensorId] || "Unknown";
+        readings
+            .filter(r => r.readingType === "Temperature")
+            .forEach(r => {
+            const date = r.readingDate; // only date
+            const location = sensorMap[r.sensorId] || "Unknown";
 
-        if (!map[date]) {
-            map[date] = { datetime: date };
-        }
-
-        if (!map[date][location]) {
-            map[date][location] = [];
-        }
-
-        map[date][location].push(r.readingValue);
-        });
-
-        return Object.values(map).map(entry => {
-        const result = { datetime: entry.datetime };
-
-        Object.keys(entry).forEach(key => {
-            if (key !== "datetime") {
-            result[key] = mean(entry[key]);  
+            // Create Date Bucket
+            if (!map[date]) {
+                map[date] = { datetime: date };
             }
-        });
 
-        return result;
-        });
+            // Create Location Bucket
+            if (!map[date][location]) {
+                map[date][location] = [];
+            }
+
+            map[date][location].push(r.readingValue);
+            });
+
+            // Convert Map to Array
+            return Object.values(map).map(entry => {
+            const result = { datetime: entry.datetime };
+
+            // For each date object: compute mean per location
+            Object.keys(entry).forEach(key => {
+                if (key !== "datetime") {
+                result[key] = mean(entry[key]);  
+                }
+            });
+
+            return result;
+            });
     }, [readings, sensorMap]);
 
 
     // Prepare time series per sensor type
     const readingsByType = sensorTypes.reduce((acc, type) => {
-    acc[type] = readings
-        .filter(r => r.readingType === type)
-        .map(r => ({
-        datetime: `${r.readingDate} ${r.readingTime}`,
-        value: r.readingValue
-        }))
-        .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-    return acc;
+        acc[type] = readings
+            .filter(r => r.readingType === type)
+            .map(r => ({
+            datetime: `${r.readingDate} ${r.readingTime}`,
+            value: r.readingValue
+            }))
+            .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+        return acc;
     }, {});
 
 
     //  Correlation between Temperature and Humidity
     const scatterData = useMemo(() => {
-    const temp = readings.filter(r => r.readingType === "Temperature");
-    const humidity = readings.filter(r => r.readingType === "Humidity");
+        const temp = readings.filter(r => r.readingType === "Temperature");
+        const humidity = readings.filter(r => r.readingType === "Humidity");
 
-    const humidityMap = new Map();
+        const humidityMap = new Map();
 
-    humidity.forEach(r => {
-        const key = `${r.readingDate} ${r.readingTime}`;
-        humidityMap.set(key, r.readingValue);
-    });
+        humidity.forEach(r => {
+            const key = `${r.readingDate} ${r.readingTime}`;
+            humidityMap.set(key, r.readingValue);
+        });
 
-    return temp
-        .map(t => {
-        const key = `${t.readingDate} ${t.readingTime}`;
-        return {
-            temperature: t.readingValue,
-            humidity: humidityMap.get(key)
-        };
-        })
-        .filter(d => d.humidity !== undefined);
+        return temp
+            .map(t => {
+            const key = `${t.readingDate} ${t.readingTime}`;
+            return {
+                temperature: t.readingValue,
+                humidity: humidityMap.get(key),
+                location: sensorMap[t.sensorId] || "Unknown",
+                datetime: key
+            };
+            })
+            .filter(d => d.humidity !== undefined);
     }, [readings]);
     
 
@@ -195,17 +206,17 @@ export default function Charts() {
     //  Value range distribution
     const pieData = [
     {
-        name: "Low (-50 to 20)",
+        name: `Low ( -50°C to 20°C )`,
         type: "Low",
         value: tempReadings.filter(r => r.readingValue < 20).length
     },
     {
-        name: "Normal (20 to 25)",
+        name: "Normal ( 20°C to 25°C )",
         type: "Normal",
         value: tempReadings.filter(r => r.readingValue >= 20 && r.readingValue <= 25).length
     },
     {
-        name: "High (25 to 100)",
+        name: "High ( 25°C to 100°C )",
         type: "High",
         value: tempReadings.filter(r => r.readingValue > 25).length
     }
@@ -350,7 +361,7 @@ export default function Charts() {
                     type="monotone"
                     dataKey={location}
                     stroke={
-                    ["#ef4444", "#3b82f6", "#10b981", "#f59e0b"][index % 4]
+                    ["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"][index % 5]
                     }
                     dot={false}
                 />
@@ -371,7 +382,25 @@ export default function Charts() {
             <CartesianGrid />
             <XAxis type="number" dataKey="temperature" name="Temperature" unit="°C" />
             <YAxis type="number" dataKey="humidity" name="Humidity" unit="%" />
-            <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+            <Tooltip
+            formatter={(value, name) => [value, name]}
+            labelFormatter={() => ""} 
+            content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                const data = payload[0].payload;
+
+                return (
+                    <div className="bg-white p-2 border rounded shadow text-sm">
+                    <p><strong>Location:</strong> {data.location}</p>
+                    <p><strong>Temperature:</strong> {data.temperature} °C</p>
+                    <p><strong>Humidity:</strong> {data.humidity} %</p>
+                    <p><strong>Time:</strong> {data.datetime}</p>
+                    </div>
+                );
+                }
+                return null;
+            }}
+            />
             <Scatter data={scatterData} fill="#82ca9d" />
         </ScatterChart>
         </ResponsiveContainer>
