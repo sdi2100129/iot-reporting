@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "../api";
 import {
+  ScatterChart,
+  Scatter,
   BarChart,
   Bar,
   LineChart,
@@ -33,6 +35,7 @@ export default function Charts() {
     });
 
     const [readings, setReadings] = useState([]);
+    const [sensors, setSensors] = useState([]);
     const [error, setError] = useState(null);
 
     const fetchReadings = async () => {
@@ -50,13 +53,98 @@ export default function Charts() {
         }
     };
 
+    const fetchSensors = async () => {
+    try {
+        const res = await api.get("/sensors");
+        setSensors(res.data.data || []);
+    } catch (err) {
+        console.error("Failed to fetch sensors");
+    }
+    };
 
-    // Compute mean per sensor type
-    const meanData = sensorTypes.map(type => {
-    const vals = readings.filter(r => r.readingType === type).map(r => r.readingValue);
-    const mean = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : 0;
-    return { type, mean: Number(mean) };
-    });
+    useEffect(() => {
+    fetchSensors();
+    }, []);
+
+
+    // Create Sensor Map (sensorId → location)
+    const sensorMap = useMemo(() => {
+        const map = {};
+        sensors.forEach(s => {
+            map[s.sensorId] = s.location;
+        });
+        return map;
+    }, [sensors]);
+
+
+    // Grouped data: mean per sensor type per location
+    const mean = (arr) =>
+    arr.length
+        ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1))
+        : 0;
+
+    // Step 1: Group readings by location
+    const groupedData = Object.values(
+    readings.reduce((acc, r) => {
+
+        const loc = sensorMap[r.sensorId] || "Unknown";
+
+        if (!acc[loc]) {
+        acc[loc] = {
+            location: loc,
+            Temperature: [],
+            Humidity: [],
+            Acoustic: []
+        };
+        }
+
+        acc[loc][r.readingType].push(r.readingValue);
+
+        return acc;
+    }, {})
+    )
+    // Step 2: Convert arrays → means
+    .map(loc => ({
+        location: loc.location,
+        Temperature: mean(loc.Temperature),
+        Humidity: mean(loc.Humidity),
+        Acoustic: mean(loc.Acoustic)
+    }));
+
+
+    //  Mean temperature per day per location
+    const multiLocationData = useMemo(() => {
+    const map = {};
+
+    readings
+        .filter(r => r.readingType === "Temperature")
+        .forEach(r => {
+        const date = r.readingDate; // μόνο date
+        const location = sensorMap[r.sensorId] || "Unknown";
+
+        if (!map[date]) {
+            map[date] = { datetime: date };
+        }
+
+        if (!map[date][location]) {
+            map[date][location] = [];
+        }
+
+        map[date][location].push(r.readingValue);
+        });
+
+        return Object.values(map).map(entry => {
+        const result = { datetime: entry.datetime };
+
+        Object.keys(entry).forEach(key => {
+            if (key !== "datetime") {
+            result[key] = mean(entry[key]);   // 👈 εδώ
+            }
+        });
+
+        return result;
+        });
+    }, [readings, sensorMap]);
 
 
     // Prepare time series per sensor type
@@ -71,6 +159,30 @@ export default function Charts() {
     return acc;
     }, {});
 
+
+    //  Correlation between Temperature and Humidity
+    const scatterData = useMemo(() => {
+    const temp = readings.filter(r => r.readingType === "Temperature");
+    const humidity = readings.filter(r => r.readingType === "Humidity");
+
+    const humidityMap = new Map();
+
+    humidity.forEach(r => {
+        const key = `${r.readingDate} ${r.readingTime}`;
+        humidityMap.set(key, r.readingValue);
+    });
+
+    return temp
+        .map(t => {
+        const key = `${t.readingDate} ${t.readingTime}`;
+        return {
+            temperature: t.readingValue,
+            humidity: humidityMap.get(key)
+        };
+        })
+        .filter(d => d.humidity !== undefined);
+    }, [readings]);
+    
 
     //  Trend direction using last-first as criterion
     const trend = (values) => {
@@ -102,11 +214,10 @@ export default function Charts() {
 
 
     const COLORS = {
-    Low: "#3b82f6",      // Blue
-    Normal: "#facc15",   // Yellow
-    High: "#ef4444"      // Red
+        Low: "#3b82f6",      // Blue
+        Normal: "#facc15",   // Yellow
+        High: "#ef4444"      // Red
     };
-
 
 
     return (
@@ -114,6 +225,8 @@ export default function Charts() {
         <h1 className="text-6xl md:text-7xl font-extrabold text-purple-600 mb-8 tracking-wider font-[cursive]">
         Sensor Metrics & Charts
         </h1>
+
+        <br />
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -169,39 +282,102 @@ export default function Charts() {
         {/* Grouped Horizontal Bar Chart */}
         {groupedData.length > 0 && (
         <div className="mb-10 bg-white p-4 rounded shadow-md">
-            <h2 className="text-xl font-bold mb-2">Mean per Sensor Type</h2>
-            <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={meanData}>
+            <h2 className="text-xl font-bold mb-4">
+            Mean Sensor Values per Location
+            </h2>
+
+            <ResponsiveContainer width="100%" height={350}>
+            <BarChart
+                data={groupedData}
+                layout="vertical"
+                margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+            >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="type" />
-                <YAxis />
+
+                {/* X = numeric values */}
+                <XAxis type="number" />
+
+                {/* Y = locations */}
+                <YAxis
+                dataKey="location"
+                type="category"
+                width={120}
+                />
+
                 <Tooltip />
-                <Bar dataKey="mean" fill="#8884d8" />
+                <Legend />
+
+                {/* Grouped bars (different colors) */}
+                <Bar dataKey="Temperature" fill="#ef4444" />
+                <Bar dataKey="Humidity" fill="#3b82f6" />
+                <Bar dataKey="Acoustic" fill="#10b981" />
             </BarChart>
             </ResponsiveContainer>
         </div>
         )}
 
-        {/* Line Charts per Sensor Type */}
-        {sensorTypes.map(type => (
-        <div key={type} className="mb-8 bg-white p-4 rounded shadow-md">
-            <h2 className="text-xl font-bold mb-2">{type} Readings Over Time</h2>
-            {readingsByType[type].length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={readingsByType[type]}>
+
+        {/* Multi-Line Time Series (Temperature per Location) */}
+        {multiLocationData.length > 0 && (
+        <div className="mb-10 bg-white p-4 rounded shadow-md">
+            <h2 className="text-xl font-bold mb-4">
+            Temperature Over Time (Per Location)
+            </h2>
+
+            <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={multiLocationData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="datetime" tick={{ fontSize: 12 }} />
-                <YAxis unit={units[type]} />
+
+                <XAxis
+                dataKey="datetime"
+                tick={{ fontSize: 12 }}
+                />
+
+                <YAxis unit="°C" />
+
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="value" stroke="#82ca9d" strokeWidth={2} dot={false} />
-                </LineChart>
+
+                {[
+                ...new Set(
+                    readings
+                    .filter(r => r.readingType === "Temperature")
+                    .map(r => sensorMap[r.sensorId])
+                )
+                ].map((location, index) => (
+                <Line
+                    key={location}
+                    type="monotone"
+                    dataKey={location}
+                    stroke={
+                    ["#ef4444", "#3b82f6", "#10b981", "#f59e0b"][index % 4]
+                    }
+                    dot={false}
+                />
+                ))}
+            </LineChart>
             </ResponsiveContainer>
-            ) : (
-            <p className="text-gray-600">No readings available</p>
-            )}
         </div>
-        ))}
+        )}
+
+
+        {scatterData.length > 0 && (
+        <div className="mb-10 bg-white p-4 rounded shadow-md">
+        <h2 className="text-xl font-bold mb-4">
+            Temperature vs Humidity
+        </h2>
+        <ResponsiveContainer width="100%" height={350}>
+        <ScatterChart>
+            <CartesianGrid />
+            <XAxis type="number" dataKey="temperature" name="Temperature" unit="°C" />
+            <YAxis type="number" dataKey="humidity" name="Humidity" unit="%" />
+            <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+            <Scatter data={scatterData} fill="#82ca9d" />
+        </ScatterChart>
+        </ResponsiveContainer>
+        </div>
+        )}
+
 
         {/* Trend Direction */}
         {readings.length > 0 && (
@@ -223,6 +399,7 @@ export default function Charts() {
             </div>
         </div>
         )}
+
 
         {/* Temperature Distribution Pie Chart */}
         {tempReadings.length > 0 && (

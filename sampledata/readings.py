@@ -33,8 +33,8 @@ for day in range(days):
         location = sensor_location[sensor_id]
         
 
-        # Random times for morning, noon, evening
-        for hour in [9, 12, 15]:
+        # Generate more time points (every 2 hours)
+        for hour in range(0, 24, 2):
             reading = SensorReading(
                 id=reading_id,
                 sensorId=sensor_id,
