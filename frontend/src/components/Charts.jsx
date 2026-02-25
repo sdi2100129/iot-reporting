@@ -25,6 +25,37 @@ const units = {
   Acoustic: "dB"
 };
 
+
+const addDays = (dateStr, days) => {
+    // dateStr expected: "YYYY-MM-DD"
+    const d = new Date(dateStr + "T00:00:00");
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+};
+
+
+// simple least-squares line y = a + b*x
+const linearForecast = (values) => {
+    const n = values.length;
+    if (n < 2) return { a: values[0] ?? 0, b: 0 };
+
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    for (let i = 0; i < n; i++) {
+        const x = i;
+        const y = values[i];
+        sumX += x;
+        sumY += y;
+        sumXY += x * y;
+        sumX2 += x * x;
+    }
+    const denom = n * sumX2 - sumX * sumX;
+    const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+    const a = (sumY - b * sumX) / n;
+
+    return { a, b };
+};
+
+
 export default function Charts() {
     const sensorTypes = ["Temperature", "Humidity", "Acoustic"];
 
@@ -142,31 +173,33 @@ export default function Charts() {
 
             // Convert Map to Array
             return Object.values(map).map(entry => {
-            const result = { datetime: entry.datetime };
+                const result = { datetime: entry.datetime };
 
-            // For each date object: compute mean per location
-            Object.keys(entry).forEach(key => {
-                if (key !== "datetime") {
-                result[key] = mean(entry[key]);  
-                }
-            });
+                // For each date object: compute mean per location
+                Object.keys(entry).forEach(key => {
+                    if (key !== "datetime") {
+                    result[key] = mean(entry[key]);  
+                    }
+                });
 
-            return result;
-            });
+                return result;
+            }).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
     }, [readings, sensorMap]);
 
 
     // Prepare time series per sensor type
-    const readingsByType = sensorTypes.reduce((acc, type) => {
-        acc[type] = readings
+    const readingsByType = useMemo(() => {
+        return sensorTypes.reduce((acc, type) => {
+            acc[type] = readings
             .filter(r => r.readingType === type)
             .map(r => ({
-            datetime: `${r.readingDate} ${r.readingTime}`,
-            value: r.readingValue
+                datetime: `${r.readingDate} ${r.readingTime}`,
+                value: r.readingValue
             }))
             .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-        return acc;
-    }, {});
+            return acc;
+        }, {});
+    }, [readings, sensorTypes]);
 
 
     //  Correlation between Temperature and Humidity
@@ -192,7 +225,7 @@ export default function Charts() {
             };
             })
             .filter(d => d.humidity !== undefined);
-    }, [readings]);
+    }, [readings, sensorMap]);
     
 
     //  Trend direction using last-first as criterion
@@ -243,35 +276,6 @@ export default function Charts() {
     }, [readings, sensorMap]);
 
 
-    const addDays = (dateStr, days) => {
-        // dateStr expected: "YYYY-MM-DD"
-        const d = new Date(dateStr + "T00:00:00");
-        d.setDate(d.getDate() + days);
-        return d.toISOString().slice(0, 10);
-    };
-
-    // simple least-squares line y = a + b*x
-    const linearForecast = (values) => {
-        const n = values.length;
-        if (n < 2) return { a: values[0] ?? 0, b: 0 };
-
-        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
-        for (let i = 0; i < n; i++) {
-            const x = i;
-            const y = values[i];
-            sumX += x;
-            sumY += y;
-            sumXY += x * y;
-            sumX2 += x * x;
-        }
-        const denom = n * sumX2 - sumX * sumX;
-        const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
-        const a = (sumY - b * sumX) / n;
-
-        return { a, b };
-    };
-
-
     //  ForecastData based on multiLocationData
     //  For each location, fit a line to the last 7 days and forecast the next 7 days
     const forecastData = useMemo(() => {
@@ -310,8 +314,8 @@ export default function Charts() {
             const { a, b } = linearForecast(tail);
 
             for (let i = 0; i < HORIZON_DAYS; i++) {
-            // x continues after the tail: tail indices are 0..tail.length-1
-            const x = tail.length + i;
+            //  make the first forecast point “1 step after the last tail point”
+            const x = (tail.length - 1) + (i + 1);
             const y = a + b * x;
             futureRows[i][`${loc} (Forecast)`] = Number(y.toFixed(1));
             }
@@ -432,37 +436,42 @@ export default function Charts() {
             </h2>
 
             <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={multiLocationData}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <LineChart data={multiLocationWithForecast}>
+                    <CartesianGrid strokeDasharray="3 3" />
 
-                <XAxis
-                dataKey="datetime"
-                tick={{ fontSize: 12 }}
-                />
+                    <XAxis
+                    dataKey="datetime"
+                    tick={{ fontSize: 12 }}
+                    />
 
-                <YAxis unit="°C" />
+                    <YAxis unit="°C" />
 
-                <Tooltip />
-                <Legend />
+                    <Tooltip />
+                    <Legend />
 
-                {[
-                ...new Set(
-                    readings
-                    .filter(r => r.readingType === "Temperature")
-                    .map(r => sensorMap[r.sensorId])
-                )
-                ].map((location, index) => (
-                <Line
-                    key={location}
-                    type="monotone"
-                    dataKey={location}
-                    stroke={
-                    ["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"][index % 5]
-                    }
-                    dot={false}
-                />
-                ))}
-            </LineChart>
+                    {/* Actual lines */}
+                    {tempLocations.map((location, index) => (
+                    <Line
+                        key={location}
+                        type="monotone"
+                        dataKey={location}
+                        stroke={["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"][index % 5]}
+                        dot={false}
+                    />
+                    ))}
+
+                    {/* Forecast lines (dashed) */}
+                    {tempLocations.map((location, index) => (
+                    <Line
+                        key={`${location}-forecast`}
+                        type="monotone"
+                        dataKey={`${location} (Forecast)`}
+                        stroke={["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"][index % 5]}
+                        strokeDasharray="6 6"
+                        dot={false}
+                    />
+                    ))}
+                </LineChart>
             </ResponsiveContainer>
         </div>
         )}
@@ -548,7 +557,13 @@ export default function Charts() {
                 ))}
                 </Pie>
                 <Tooltip />
-                <Legend />
+                <Legend
+                payload={[
+                    { value: "Low ( -50°C to 20°C )", type: "square", color: "#3b82f6" },
+                    { value: "Normal ( 20°C to 25°C )", type: "square", color: "#facc15" },
+                    { value: "High ( 25°C to 100°C )", type: "square", color: "#ef4444" }
+                ]}
+                />
             </PieChart>
             </ResponsiveContainer>
         </div>
