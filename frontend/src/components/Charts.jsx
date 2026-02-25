@@ -225,10 +225,106 @@ export default function Charts() {
 
 
     const COLORS = {
-        Low: "#3b82f6",      // Blue
-        Normal: "#facc15",   // Yellow
-        High: "#ef4444"      // Red
+        Low: "#3b82f6",     
+        Normal: "#facc15",   
+        High: "#ef4444"   
     };
+
+
+    //
+    const tempLocations = useMemo(() => {
+        return [
+            ...new Set(
+            readings
+                .filter(r => r.readingType === "Temperature")
+                .map(r => sensorMap[r.sensorId] || "Unknown")
+            )
+        ];
+    }, [readings, sensorMap]);
+
+
+    const addDays = (dateStr, days) => {
+        // dateStr expected: "YYYY-MM-DD"
+        const d = new Date(dateStr + "T00:00:00");
+        d.setDate(d.getDate() + days);
+        return d.toISOString().slice(0, 10);
+    };
+
+    // simple least-squares line y = a + b*x
+    const linearForecast = (values) => {
+        const n = values.length;
+        if (n < 2) return { a: values[0] ?? 0, b: 0 };
+
+        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        for (let i = 0; i < n; i++) {
+            const x = i;
+            const y = values[i];
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumX2 += x * x;
+        }
+        const denom = n * sumX2 - sumX * sumX;
+        const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+        const a = (sumY - b * sumX) / n;
+
+        return { a, b };
+    };
+
+
+    //  ForecastData based on multiLocationData
+    //  For each location, fit a line to the last 7 days and forecast the next 7 days
+    const forecastData = useMemo(() => {
+        if (!multiLocationData.length || !tempLocations.length) return [];
+
+        const HORIZON_DAYS = 7;     // how far ahead
+        const LOOKBACK = 7;         // how many past points to fit
+
+        // Ensure sorted by date (your multiLocationData already is usually, but safe)
+        const sorted = [...multiLocationData].sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+        );
+
+        const lastDate = sorted[sorted.length - 1].datetime;
+
+        // For each location, extract its historical series
+        const seriesByLoc = {};
+        tempLocations.forEach(loc => {
+            const vals = sorted
+            .map(row => row[loc])
+            .filter(v => typeof v === "number" && !Number.isNaN(v));
+            seriesByLoc[loc] = vals;
+        });
+
+        // Build future rows
+        const futureRows = Array.from({ length: HORIZON_DAYS }, (_, i) => {
+            return { datetime: addDays(lastDate, i + 1) };
+        });
+
+        // Fill future rows with forecast per location
+        tempLocations.forEach(loc => {
+            const vals = seriesByLoc[loc];
+            if (vals.length < 2) return;
+
+            const tail = vals.slice(-LOOKBACK);
+            const { a, b } = linearForecast(tail);
+
+            for (let i = 0; i < HORIZON_DAYS; i++) {
+            // x continues after the tail: tail indices are 0..tail.length-1
+            const x = tail.length + i;
+            const y = a + b * x;
+            futureRows[i][`${loc} (Forecast)`] = Number(y.toFixed(1));
+            }
+        });
+
+        return futureRows;
+    }, [multiLocationData, tempLocations]);
+
+
+    // Combine actual and forecast data for unified charting
+    const multiLocationWithForecast = useMemo(() => {
+        return [...multiLocationData, ...forecastData];
+    }, [multiLocationData, forecastData]);
 
 
     return (
