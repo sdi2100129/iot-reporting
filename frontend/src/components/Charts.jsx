@@ -38,7 +38,7 @@ const addDays = (dateStr, days) => {
 const linearForecast = (values) => {
     const n = values.length;
     if (n < 2) return { a: values[0] ?? 0, b: 0 };
-
+    
     let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
     for (let i = 0; i < n; i++) {
         const x = i;
@@ -51,8 +51,26 @@ const linearForecast = (values) => {
     const denom = n * sumX2 - sumX * sumX;
     const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
     const a = (sumY - b * sumX) / n;
-
+    
     return { a, b };
+};
+
+
+const ACOUSTIC_THRESHOLD_DB = 80;
+
+const AnomalyDot = ({ cx, cy, payload }) => {
+    if (!payload?.isAnomaly) return null; // show no dot for normal points
+
+    return (
+        <circle
+        cx={cx}
+        cy={cy}
+        r={5}
+        fill="#ef4444"
+        stroke="#ffffff"
+        strokeWidth={1.5}
+        />
+    );
 };
 
 
@@ -187,21 +205,6 @@ export default function Charts() {
     }, [readings, sensorMap]);
 
 
-    // Prepare time series per sensor type
-    const readingsByType = useMemo(() => {
-        return sensorTypes.reduce((acc, type) => {
-            acc[type] = readings
-            .filter(r => r.readingType === type)
-            .map(r => ({
-                datetime: `${r.readingDate} ${r.readingTime}`,
-                value: r.readingValue
-            }))
-            .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-            return acc;
-        }, {});
-    }, [readings, sensorTypes]);
-
-
     //  Correlation between Temperature and Humidity
     const scatterData = useMemo(() => {
         const temp = readings.filter(r => r.readingType === "Temperature");
@@ -226,35 +229,42 @@ export default function Charts() {
             })
             .filter(d => d.humidity !== undefined);
     }, [readings, sensorMap]);
-    
-
-    //  Trend direction using last-first as criterion
-    const trend = (values) => {
-    if (values.length < 2) return "Stable";
-    return values[values.length - 1] > values[0] ? "Increasing" : "Decreasing";
-    };
 
 
     const tempReadings = readings.filter(r => r.readingType === "Temperature");
     //  Value range distribution
     const pieData = [
-    {
-        name: `Low ( -50°C to 20°C )`,
-        type: "Low",
-        value: tempReadings.filter(r => r.readingValue < 20).length
-    },
-    {
-        name: "Normal ( 20°C to 25°C )",
-        type: "Normal",
-        value: tempReadings.filter(r => r.readingValue >= 20 && r.readingValue <= 25).length
-    },
-    {
-        name: "High ( 25°C to 100°C )",
-        type: "High",
-        value: tempReadings.filter(r => r.readingValue > 25).length
-    }
+        {
+            name: `Low ( -50°C to 20°C )`,
+            type: "Low",
+            value: tempReadings.filter(r => r.readingValue < 20).length
+        },
+        {
+            name: "Normal ( 20°C to 25°C )",
+            type: "Normal",
+            value: tempReadings.filter(r => r.readingValue >= 20 && r.readingValue <= 25).length
+        },
+        {
+            name: "High ( 25°C to 100°C )",
+            type: "High",
+            value: tempReadings.filter(r => r.readingValue > 25).length
+        }
     ];
+    
 
+
+
+    const acousticSeries = useMemo(() => {
+        return readings
+            .filter(r => r.readingType === "Acoustic")
+            .map(r => ({
+            datetime: `${r.readingDate} ${r.readingTime}`,
+            value: r.readingValue,
+            location: sensorMap[r.sensorId] || "Unknown",
+            isAnomaly: r.readingValue >= ACOUSTIC_THRESHOLD_DB
+            }))
+            .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+    }, [readings, sensorMap]);
 
 
     const COLORS = {
@@ -477,60 +487,90 @@ export default function Charts() {
         )}
 
 
+        {/* Temperature - Humidity correlation */}
         {scatterData.length > 0 && (
         <div className="mb-10 bg-white p-4 rounded shadow-md">
         <h2 className="text-xl font-bold mb-4">
             Temperature vs Humidity
         </h2>
         <ResponsiveContainer width="100%" height={350}>
-        <ScatterChart>
-            <CartesianGrid />
-            <XAxis type="number" dataKey="temperature" name="Temperature" unit="°C" />
-            <YAxis type="number" dataKey="humidity" name="Humidity" unit="%" />
-            <Tooltip
-            formatter={(value, name) => [value, name]}
-            labelFormatter={() => ""} 
-            content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                const data = payload[0].payload;
+            <ScatterChart>
+                <CartesianGrid />
+                <XAxis type="number" dataKey="temperature" name="Temperature" unit="°C" />
+                <YAxis type="number" dataKey="humidity" name="Humidity" unit="%" />
+                <Tooltip
+                formatter={(value, name) => [value, name]}
+                labelFormatter={() => ""} 
+                content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                    const data = payload[0].payload;
 
-                return (
-                    <div className="bg-white p-2 border rounded shadow text-sm">
-                    <p><strong>Location:</strong> {data.location}</p>
-                    <p><strong>Temperature:</strong> {data.temperature} °C</p>
-                    <p><strong>Humidity:</strong> {data.humidity} %</p>
-                    <p><strong>Time:</strong> {data.datetime}</p>
-                    </div>
-                );
-                }
-                return null;
-            }}
-            />
-            <Scatter data={scatterData} fill="#82ca9d" />
-        </ScatterChart>
+                    return (
+                        <div className="bg-white p-2 border rounded shadow text-sm">
+                        <p><strong>Location:</strong> {data.location}</p>
+                        <p><strong>Temperature:</strong> {data.temperature} °C</p>
+                        <p><strong>Humidity:</strong> {data.humidity} %</p>
+                        <p><strong>Time:</strong> {data.datetime}</p>
+                        </div>
+                    );
+                    }
+                    return null;
+                }}
+                />
+                <Scatter data={scatterData} fill="#82ca9d" />
+            </ScatterChart>
         </ResponsiveContainer>
         </div>
         )}
 
 
-        {/* Trend Direction */}
-        {readings.length > 0 && (
+        {/* Acoustic anomalies over time */}
+        {acousticSeries.length > 0 && (
         <div className="mb-10 bg-white p-4 rounded shadow-md">
-            <h2 className="text-xl font-bold mb-4">Trend Direction</h2>
+            <h2 className="text-xl font-bold mb-4">
+            Acoustic Readings (Anomalies ≥ {ACOUSTIC_THRESHOLD_DB} dB)
+            </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {sensorTypes.map(type => {
-                const values = readingsByType[type].map(r => r.value);
-                return (
-                <div key={type} className="p-4 border rounded text-center">
-                    <h3 className="font-semibold">{type}</h3>
-                    <p className="text-lg mt-2">
-                    {trend(values)}
-                    </p>
-                </div>
-                );
-            })}
-            </div>
+            <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={acousticSeries}>
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis dataKey="datetime" tick={{ fontSize: 12 }} />
+                <YAxis unit="dB" />
+
+                <Tooltip
+                content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                    const d = payload[0].payload;
+                    return (
+                        <div className="bg-white p-2 border rounded shadow text-sm">
+                        <p><strong>Time:</strong> {d.datetime}</p>
+                        <p><strong>Location:</strong> {d.location}</p>
+                        <p><strong>Acoustic:</strong> {d.value} dB</p>
+                        <p>
+                            <strong>Status:</strong>{" "}
+                            {d.isAnomaly ? "Anomaly" : "Normal"}
+                        </p>
+                        </div>
+                    );
+                    }
+                    return null;
+                }}
+                />
+
+                <Legend />
+
+                {/* The line (no normal dots) + custom anomaly dots */}
+                <Line
+                type="monotone"
+                dataKey="value"
+                name="Acoustic"
+                stroke="#0B6E4F"
+                dot={<AnomalyDot />}
+                activeDot={{ r: 6 }}
+                />
+            </LineChart>
+            </ResponsiveContainer>
         </div>
         )}
 
@@ -547,7 +587,8 @@ export default function Charts() {
                 dataKey="value"
                 nameKey="name"
                 outerRadius={100}
-                label
+                labelLine={false}
+                label={({ value, percent }) => `${value} (${(percent * 100).toFixed(0)}%)`}
                 >
                 {pieData.map((entry, index) => (
                     <Cell
@@ -557,13 +598,7 @@ export default function Charts() {
                 ))}
                 </Pie>
                 <Tooltip />
-                <Legend
-                payload={[
-                    { value: "Low ( -50°C to 20°C )", type: "square", color: "#3b82f6" },
-                    { value: "Normal ( 20°C to 25°C )", type: "square", color: "#facc15" },
-                    { value: "High ( 25°C to 100°C )", type: "square", color: "#ef4444" }
-                ]}
-                />
+                <Legend />
             </PieChart>
             </ResponsiveContainer>
         </div>

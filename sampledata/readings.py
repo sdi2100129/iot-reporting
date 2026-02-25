@@ -1,49 +1,67 @@
 from models import SensorReading
 from datetime import date, time, timedelta
 import random
+import math
 from sampledata.sensors import Sensors
 
-# Dictionary to map sensor id with each location value
 sensor_location = {s.sensorId: s.location for s in Sensors}
-
 Readings = []
 
-# Generate readings for 15 sensors over 10 days
 reading_id = 1
 start_date = date(2025, 2, 1)
 days = 10
-locationId = (reading_id-1) % 5
 
 for day in range(days):
     current_date = start_date + timedelta(days=day)
+
+    # gradual warming trend
+    daily_trend = day * 0.3  
+
     for sensor_id in range(1, 16):
 
-        # Determine reading type based on sensor_id
-        if 1 <= sensor_id <= 5:
-            reading_type = "Temperature"
-            value = round(random.uniform(18.0, 25.0), 1)
-        elif 6 <= sensor_id <= 10:
-            reading_type = "Humidity"
-            value = round(random.uniform(45.0, 60.0), 1)
-        else:
-            reading_type = "Acoustic"
-            value = round(random.uniform(60.0, 75.0), 1)
-
-
         location = sensor_location[sensor_id]
-        
 
-        # Generate more time points (every 2 hours)
         for hour in range(0, 24, 2):
+
+            # --- TEMPERATURE SENSORS ---
+            if 1 <= sensor_id <= 5:
+                reading_type = "Temperature"
+
+                # simulate daily sinusoidal cycle
+                base_temp = 20 + 4 * math.sin((hour / 24) * 2 * math.pi)
+                location_offset = (sensor_id % 5) * 0.5
+                value = base_temp + daily_trend + location_offset
+                value += random.uniform(-0.8, 0.8)
+
+            # --- HUMIDITY SENSORS ---
+            elif 6 <= sensor_id <= 10:
+                reading_type = "Humidity"
+
+                # inverse relation to temperature
+                base_humidity = 60 - 5 * math.sin((hour / 24) * 2 * math.pi)
+                value = base_humidity - daily_trend * 0.5
+                value += random.uniform(-2, 2)
+
+            # --- ACOUSTIC SENSORS ---
+            else:
+                reading_type = "Acoustic"
+
+                # normal environment noise
+                value = 65 + random.uniform(-5, 5)
+
+                # introduce occasional spikes (anomalies)
+                if random.random() < 0.05:
+                    value += random.uniform(20, 35)
+
             reading = SensorReading(
                 id=reading_id,
                 sensorId=sensor_id,
                 readingType=reading_type,
-                readingValue=round(value + random.uniform(-1, 1), 1),  # small random variation
+                readingValue=round(value, 1),
                 readingDate=current_date,
                 readingTime=time(hour, random.randint(0, 59)),
-                description=f"{reading_type} in {location} "
+                description=f"{reading_type} in {location}"
             )
+
             Readings.append(reading)
             reading_id += 1
-
