@@ -57,7 +57,7 @@ const linearForecast = (values) => {
 
 
 const ACOUSTIC_THRESHOLD_DB = 80;
-
+// Custom dot for acoustic anomalies
 const AnomalyDot = ({ cx, cy, payload }) => {
     if (!payload?.isAnomaly) return null; // show no dot for normal points
 
@@ -158,7 +158,7 @@ export default function Charts() {
         // Step 2: Convert arrays → means
         return map.map(loc => ({
             location: loc.location,
-            Temperature: mean(loc.Temperature),
+            Temperature: mean(loc.Temperature) ,
             Humidity: mean(loc.Humidity),
             Acoustic: mean(loc.Acoustic)
         }));
@@ -252,8 +252,7 @@ export default function Charts() {
     ];
     
 
-
-
+    //  Acoustic readings with anomaly flag
     const acousticSeries = useMemo(() => {
         return readings
             .filter(r => r.readingType === "Acoustic")
@@ -274,7 +273,7 @@ export default function Charts() {
     };
 
 
-    //
+    // Extract unique locations that have Temperature readings (for multi-line chart)
     const tempLocations = useMemo(() => {
         return [
             ...new Set(
@@ -408,31 +407,36 @@ export default function Charts() {
             </h2>
 
             <ResponsiveContainer width="100%" height={350}>
-            <BarChart
-                data={groupedData}
-                layout="vertical"
-                margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
+                <BarChart
+                    data={groupedData}
+                    layout="vertical"
+                    margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+                >
+                    <CartesianGrid strokeDasharray="3 3" />
 
-                {/* X = numeric values */}
-                <XAxis type="number" />
+                    {/* X = numeric values */}
+                    <XAxis type="number" />
 
-                {/* Y = locations */}
-                <YAxis
-                dataKey="location"
-                type="category"
-                width={120}
-                />
+                    {/* Y = locations */}
+                    <YAxis
+                    dataKey="location"
+                    type="category"
+                    width={120}
+                    />
 
-                <Tooltip />
-                <Legend />
+                    <Tooltip 
+                        formatter={(value, name) => {
+                            const unit = units[name] || "";
+                            return [`${value} ${unit}`, name];
+                        }}
+                    />
+                    <Legend />
 
-                {/* Grouped bars (different colors) */}
-                <Bar dataKey="Temperature" fill="#ef4444" />
-                <Bar dataKey="Humidity" fill="#3b82f6" />
-                <Bar dataKey="Acoustic" fill="#10b981" />
-            </BarChart>
+                    {/* Grouped bars (different colors) */}
+                    <Bar dataKey="Temperature" fill="#ef4444" />
+                    <Bar dataKey="Humidity" fill="#3b82f6" />
+                    <Bar dataKey="Acoustic" fill="#10b981" />
+                </BarChart>
             </ResponsiveContainer>
         </div>
         )}
