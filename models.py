@@ -51,3 +51,41 @@ class SensorReading(BaseModel):
         if v > date.today():
             raise ValueError("readingDate cannot be in the future")
         return v
+
+
+#  What the frontend receive
+class UserOut(BaseModel):
+    id: int = Field(..., gt=0)
+    username: str = Field(...)
+    is_active: bool = Field(default=True)
+    roles: list[str] = Field(default_factory=list)
+    permissions: list[str] = Field(default_factory=list)
+
+
+#  What the frontend send
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=8, max_length=72)
+
+    @field_validator("password")
+    def validate_password(cls, v):
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one digit")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("Password must contain at least one special character")
+        return v
+    
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str = Field(...)
+    token_type: str = "bearer"
+    scopes: list[str] = Field(default_factory=list)

@@ -460,7 +460,18 @@ export default function Charts() {
 
                     <YAxis unit="°C" />
 
-                    <Tooltip />
+                    <Tooltip 
+                        formatter={(value, name) => {
+                            // name is the dataKey (e.g. "Athens" or "Athens (Forecast)")
+                            if (value == null) return ["", name];
+
+                            const unit = "°C";
+                            const prettyValue = typeof value === "number" ? value.toFixed(1) : value;
+                            typeof value === "number" ? value.toFixed(1) : value;
+
+                            return [`${prettyValue} ${unit}`];
+                        }}
+                    />
                     <Legend />
 
                     {/* Actual lines */}

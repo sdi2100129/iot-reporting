@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 import db_models
 from datetime import date, time
 from fastapi import HTTPException
-import sqlalchemy.exc
 from sampledata.sensors import Sensors
 from sampledata.readings import Readings
 import logging
@@ -17,6 +16,9 @@ from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 from collections import defaultdict
 from datetime import timedelta, datetime
+from fastapi.middleware.cors import CORSMiddleware
+import auth
+from fastapi import Security
 
 
 logging.basicConfig(
@@ -26,6 +28,8 @@ logging.basicConfig(
 
 logger = logging.getLogger("api")
 
+#   Convert the classes into tables
+db_models.base.metadata.create_all(bind=engine) 
 
 #def reset_db():
 #    """
@@ -120,7 +124,8 @@ def init_db():
             )
             db.add(db_reading)
 
-    db.commit()
+    auth.seed_auth(db)
+    # seed_auth does commits, so we don't need to commit again here
     db.close()
 
 
@@ -132,6 +137,8 @@ async def lifespan(app: FastAPI):
     # shutdown logic 
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(auth.router)
 
 
 @app.exception_handler(FastAPIHTTPException)
@@ -167,9 +174,6 @@ async def log_validation_errors(request, exc: RequestValidationError):
     )
 
 
-
-from fastapi.middleware.cors import CORSMiddleware
-
 #   Adding Cross Origin Resource Sharing headers to allow sharing resources between applications
 #   If fastAPI does not declare explicity that the browser is allowed to read data from another origin it blocks the response
 origins = [
@@ -178,31 +182,15 @@ origins = [
 ]
 
 
+#   who is allowed to call this api
 app.add_middleware(
     CORSMiddleware,
-    #   who is allowed to call me
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-from sqlalchemy import text
-
-
-#   Convert the classes into tables
-db_models.base.metadata.create_all(bind=engine) 
-
-@app.get("/")
-def greet():
-    """
-    Root endpoint to test if the API is running.
-    Returns:
-        dict: Simple greeting message.
-    """
-        
-    return {"Hello": "World"}
 
 
 def get_db():
@@ -218,8 +206,19 @@ def get_db():
         db.close() 
 
 
+@app.get("/")
+def greet():
+    """
+    Root endpoint to test if the API is running.
+    Returns:
+        dict: Simple greeting message.
+    """
+        
+    return {"Hello": "World"}
+
+
 @app.get("/sensors")
-def get_sensors(db : Session = Depends(get_db)):
+def get_sensors(db : Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["sensor:read"])):
     """
     Returns all sensors stored in the database.
     """
@@ -232,7 +231,7 @@ def get_sensors(db : Session = Depends(get_db)):
     }
 
 @app.get("/sensors/{sensorId}")
-def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
+def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["sensor:read"])):
     """
     Returns a sensor by its ID.
     """
@@ -253,7 +252,7 @@ def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db)):
 
 
 @app.get("/readings")
-def get_readings( page: int = 1, db : Session = Depends(get_db)):
+def get_readings( page: int = 1, db : Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["reading:read"])):
     """
     Returns all sensor readings.
     """
@@ -277,7 +276,7 @@ def get_readings( page: int = 1, db : Session = Depends(get_db)):
 
 
 @app.post("/sensors")
-def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
+def add_sensor(sensor: Sensor, db : Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["sensor:write"])):
     """
     Adds a new sensor to the database with the provided details.
     If a sensor with the same sensorId already exists, returns an error.
@@ -309,7 +308,7 @@ def add_sensor(sensor: Sensor, db : Session = Depends(get_db)):
 
 
 @app.post("/readings")
-def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
+def add_reading(reading: SensorReading, db: Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["reading:write"])):
     """
     Adds a new sensor reading to the database with the provided details.
     If a reading with the same id already exists, returns an error.
@@ -364,7 +363,7 @@ def add_reading(reading: SensorReading, db: Session = Depends(get_db)):
 
 
 @app.delete("/readings/{readingId}")
-def delete_reading(readingId: int, db : Session = Depends(get_db)):
+def delete_reading(readingId: int, db : Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["reading:delete"])):
     """
     Deletes a sensor reading by its ID.
     If the reading does not exist, returns an error.
@@ -390,7 +389,7 @@ def delete_reading(readingId: int, db : Session = Depends(get_db)):
 
 
 @app.put("/sensors/{sensorId}")
-def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(get_db)):
+def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["sensor:write"])):
     """
     Updates an existing sensor's details with the new provided values using the provided sensorId.
     If the sensor does not exist, returns an error.
@@ -418,7 +417,7 @@ def update_sensor(sensorId: int, updated_sensor: Sensor, db : Session = Depends(
 
 
 @app.delete("/sensors/{sensorId}")
-def delete_sensor(sensorId: int, db: Session = Depends(get_db)):
+def delete_sensor(sensorId: int, db: Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["sensor:delete"])):
     """
     Deletes a sensor by its ID along with all its readings.
     If the sensor does not exist, returns 404.
@@ -455,7 +454,8 @@ def search_readings(
     date: date = None,  
     time: time = None,
     page: int = 1,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Security(auth.get_current_user, scopes=["reading:read"])
 ):
     """
     Searches for sensor readings based on optional filters: sensor type, location, and time.
@@ -520,7 +520,8 @@ def readings_metrics(
     location: str = None,
     date: date = None,  
     time: time = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Security(auth.get_current_user, scopes=["reading:read"])
 ):
     """
     Computes metrics on sensor readings based on optional filters: sensor type, location, and time.
@@ -599,7 +600,7 @@ def readings_metrics(
 
 
 @app.get("/readings/all")
-def get_all_readings(sensor_type: str = None, location: str = None, db: Session = Depends(get_db)):
+def get_all_readings(sensor_type: str = None, location: str = None, db: Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["reading:read"])):
     query = db.query(db_models.SensorReading).join(db_models.Sensor, db_models.Sensor.sensorId == db_models.SensorReading.sensorId)
     if sensor_type:
         query = query.filter(db_models.Sensor.type == sensor_type)
