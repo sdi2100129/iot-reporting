@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getToken } from "./Auth";
 
 // Create an Axios instance with a base URL = where your backend server is running
 const api = axios.create({
@@ -8,6 +9,18 @@ const api = axios.create({
     "Content-Type": "application/json"
   }
 });
+
+
+// Attach Authorization header automatically
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 
 // Intercept all responses
 api.interceptors.response.use(

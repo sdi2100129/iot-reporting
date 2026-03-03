@@ -1,9 +1,29 @@
 import { NavLink, Link } from "react-router-dom";
 import logo from "../assets/logo.png";
+import AuthModal from "./AuthModal";
+import { isLoggedIn } from "../Auth";
+import { UserRound, LogIn } from "lucide-react";
+import { useEffect, useState } from "react";
 
 
 export default function NavBar() {
+  // To control whether the authentication modal is visible
+  const [authOpen, setAuthOpen] = useState(false);
+  const [logged, setLogged] = useState(isLoggedIn());
+  
+
+  // Listen for authentication changes to update the UI (e.g. show login/logout state)
+  useEffect(() => {
+    const sync = () => setLogged(isLoggedIn());
+    // When mounts, start listening for a custom browser event called auth:changed
+    window.addEventListener("auth:changed", sync);
+    // When unmounts, clean up the event listener
+    return () => window.removeEventListener("auth:changed", sync);
+  }, []);
+
+
   return (
+
     <div className="w-full h-20 bg-purple-800 flex items-center px-6 shadow-md fixed top-0 left-0 z-50">
       
       {/* Logo */}
@@ -14,9 +34,9 @@ export default function NavBar() {
             className="h-14 rounded-md w-auto"
         />
       </Link>
-
+ 
       {/* Menu buttons */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-1 items-center">
         <NavLink
             to="/sensors"
             className={({ isActive }) =>
@@ -64,6 +84,20 @@ export default function NavBar() {
         >
           Charts
         </NavLink>
+
+
+        {/* Push icon to the right */}
+
+        <button
+          onClick={() => setAuthOpen(true)}
+          title={logged ? "Account" : "Login"}
+          className="ml-6 shrink-0 w-12 h-12 rounded-full !bg-purple-800 hover:bg-purple-700 flex items-center justify-center text-white text-xl"
+        >
+          {logged ? <UserRound className="w-8 h-8 text-white" /> : <LogIn size={35} />}
+        </button>
+      
+
+        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 
       </div>
     </div>
