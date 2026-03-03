@@ -25,6 +25,10 @@ export default function AuthModal({ open, onClose }) {
     e.preventDefault();
     setErr("");
 
+    if (!username || !password) {
+      setErr("Username and password are required.");
+      return;
+    }
     try {
       // OAuth2PasswordRequestForm => x-www-form-urlencoded
       const form = new URLSearchParams();
@@ -39,20 +43,40 @@ export default function AuthModal({ open, onClose }) {
       saveAuth(res.data);
       onClose();
     } catch (e2) {
-      setErr(e2?.response?.data?.detail || "Login failed");
+      const detail =
+        e2?.response?.data?.detail ||          // normal axios error
+        e2?.response?.data ||                 
+        e2?.response?.detail ||               // your wrapped object cases
+        e2?.response?.data?.message ||
+        "Login failed";
+
+      setErr(typeof detail === "string" ? detail : JSON.stringify(detail));
     }
   }
 
   async function handleRegister(e) {
     e.preventDefault();
     setErr("");
-
+    
+    if (!username || !password) {
+      setErr("Username and password are required.");
+      return;
+    }
     try {
       await api.post("/auth/register", { username, password });
       // after register, auto-login
       await handleLogin(e);
     } catch (e2) {
-      setErr(e2?.response?.data?.detail || "Register failed");
+      const detail =
+        e2?.response?.data?.detail ||
+        e2?.response?.data ||
+        e2?.response?.detail ||
+        e2?.response?.data?.message ||
+        e2?.response?.response?.data?.detail ||  
+        e2?.response?.response?.data ||
+        "Register failed";
+
+      setErr(typeof detail === "string" ? detail : JSON.stringify(detail));
     }
   }
 
