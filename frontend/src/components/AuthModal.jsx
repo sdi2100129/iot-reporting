@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import { clearAuth, isLoggedIn, saveAuth } from "../Auth";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function AuthModal({ open, onClose }) {
   const [tab, setTab] = useState("login"); // login | register
@@ -56,7 +57,7 @@ export default function AuthModal({ open, onClose }) {
 
   async function handleRegister(e) {
     e.preventDefault();
-    setErr("");
+    setErr(""); 
     
     if (!username || !password) {
       setErr("Username and password are required.");
@@ -122,6 +123,36 @@ export default function AuthModal({ open, onClose }) {
           </div>
         ) : (
           <>
+            {/* Google login button */}
+            <div className="mt-4">
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  try {
+                    setErr("");
+                    const id_token = credentialResponse?.credential;
+                    if (!id_token) {
+                      setErr("Google did not return an ID token.");
+                      return;
+                    }
+
+                    const res = await api.post("/auth/google", { id_token });
+                    saveAuth(res.data);
+                    onClose();
+                  } catch (e2) {
+                    const detail =
+                      e2?.response?.data?.detail ||
+                      e2?.response?.data ||
+                      "Google login failed";
+                    setErr(typeof detail === "string" ? detail : JSON.stringify(detail));
+                  }
+                }}
+                onError={() => setErr("Google login failed")}
+              />
+            </div>
+
+            {/* Separator */}
+            <div className="my-3 text-center text-xs text-gray-400">or</div>
+
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => setTab("login")}

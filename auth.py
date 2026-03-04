@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, APIRouter
@@ -6,8 +6,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 from db_models import User
+from models import GoogleTokenIn
 import db_models
 from database import SessionLocal
 from starlette import status
@@ -16,8 +16,10 @@ from fastapi import Security
 from fastapi.security import SecurityScopes
 from dotenv import load_dotenv
 import os
-    
+from google.oauth2 import id_token 
+from google.auth.transport import requests as google_requests
 
+    
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
@@ -169,7 +171,7 @@ async def login_for_access_token( form_data: Annotated[OAuth2PasswordRequestForm
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     encode.update({"exp": expire})
     encoded_jwt = jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -210,7 +212,6 @@ async def get_current_user(
     return user
 
 
-
 @router.post("/users/{username}/roles/{role_name}")
 def add_role_to_user(
     username: str,
@@ -231,3 +232,62 @@ def add_role_to_user(
         db.commit()
 
     return {"message": f"Role '{role_name}' added to '{username}'"}
+
+
+# Endpoint to handle Google OAuth login
+@router.post("/google", response_model=Token)
+async def login_with_google(payload: GoogleTokenIn, db: dp_dendency):
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID not configured")
+
+    try:
+        # Verify Google ID token (signature, issuer, expiry, audience)
+        idinfo = id_token.verify_oauth2_token(
+            payload.id_token,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID,
+        )
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+
+    email = idinfo.get("email")
+    email_verified = idinfo.get("email_verified", False)
+
+    if not email or not email_verified:
+        raise HTTPException(status_code=403, detail="Google email not verified")
+
+    # Use email as username (simple + unique)
+    username = email.lower()
+
+    user = db.query(User).filter(User.username == username).first()
+
+    if not user:
+        # Create user (no password login needed; store random hash)
+        user = User(
+            username=username,
+            hashed_password=argon2_context.hash(os.urandom(16).hex()),
+            is_active=True
+        )
+
+        default_role = db.query(db_models.Role).filter_by(name="viewer").first()
+        if default_role:
+            user.roles.append(default_role)
+
+        db.add(user) 
+        db.commit()
+        db.refresh(user)
+
+    # Build scopes from roles -> permissions
+    scope_set = set()
+    for role in user.roles:
+        for perm in role.permissions:
+            scope_set.add(perm.name)
+
+    access_token = create_access_token(
+        data={"sub": user.username, "scopes": sorted(scope_set)},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+
+    return {"access_token": access_token, "token_type": "bearer", "scopes": sorted(scope_set)}
+

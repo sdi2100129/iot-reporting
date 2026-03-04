@@ -82,6 +82,10 @@ cp .env.example .env
 DB_PASSWORD=your_database_password
 
 SECRET_KEY=your_secret_key_here
+
+GOOGLE_CLIENT_ID=your_google_client_id_here
+
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
 ```
 
 ### OPTION A: Run using Docker (Recommended)

@@ -89,3 +89,7 @@ class Token(BaseModel):
     access_token: str = Field(...)
     token_type: str = "bearer"
     scopes: list[str] = Field(default_factory=list)
+
+
+class GoogleTokenIn(BaseModel):
+    id_token: str
