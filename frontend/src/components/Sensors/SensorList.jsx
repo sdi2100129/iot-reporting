@@ -1,5 +1,6 @@
 import { Trash2, Edit3, Cpu, MapPin, Mail, FileText, Check } from "lucide-react";
 import { useState } from "react";
+import { hasScope } from "../../Auth";
  
 export default function SensorList({ sensors, deleteSensor, updateSensor }) {
   //  Keeps trach if the confirmation button was pressed 
@@ -8,6 +9,9 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
   const [editingId, setEditingId] = useState(null);
   //  Stores the current edited field values
   const [editingValues, setEditingValues] = useState({});
+
+  const canEdit = hasScope("sensor:write");
+  const canDelete = hasScope("sensor:delete");
 
   const handleChange = (field, value) => {
     // Every time a field is in edit mode take the previous editingValues and replace the field with the new value
@@ -66,28 +70,36 @@ export default function SensorList({ sensors, deleteSensor, updateSensor }) {
 
               {/* Action buttons */}
               <div className="absolute top-4 right-4 flex gap-2">
-                {isEditing ? (
+                {/* Edit / Save button */}
+                {canEdit && (
+                  isEditing ? (
+                    <button
+                      onClick={() => handleSave(s.sensorId)}
+                      className="flex items-center justify-center bg-transparent border-none text-green-500 hover:text-green-700"
+                    >
+                      <Check className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingId(s.sensorId); setEditingValues(s); }}
+                      className="flex items-center justify-center bg-transparent border-none text-gray-400 hover:text-purple-600"
+                    >
+                      <Edit3 className="w-5 h-5" />
+                    </button>
+                  )
+                )}
+
+
+                {/* Delete button */}
+                {canDelete && (
                   <button
-                    onClick={() => handleSave(s.sensorId)}
-                    className="flex items-center justify-center bg-transparent border-none text-green-500 hover:text-green-700"
+                    onClick={() => setConfirmId(s.sensorId)}
+                    className="flex items-center justify-center bg-transparent border-none text-gray-400 hover:text-red-500"
                   >
-                    <Check className="w-5 h-5" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => { setEditingId(s.sensorId); setEditingValues(s); }}
-                    className="flex items-center justify-center bg-transparent border-none text-gray-400 hover:text-purple-600"
-                  >
-                    <Edit3 className="w-5 h-5" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 )}
 
-                <button
-                  onClick={() => setConfirmId(s.sensorId)}
-                  className="flex items-center justify-center bg-transparent border-none text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
               </div>
 
               {/* Content Layout */}

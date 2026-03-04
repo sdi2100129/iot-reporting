@@ -36,7 +36,7 @@ export default function NavBar() {
       </Link>
  
       {/* Menu buttons */}
-      <div className="flex gap-4 flex-1 items-center">
+      <div className="flex gap-4 items-center">
         <NavLink
             to="/sensors"
             className={({ isActive }) =>
@@ -85,21 +85,20 @@ export default function NavBar() {
           Charts
         </NavLink>
 
-
-        {/* Push icon to the right */}
-
-        <button
-          onClick={() => setAuthOpen(true)}
-          title={logged ? "Account" : "Login"}
-          className="ml-6 shrink-0 w-12 h-12 rounded-full !bg-purple-800 hover:bg-purple-700 flex items-center justify-center text-white text-xl"
-        >
-          {logged ? <UserRound className="w-8 h-8 text-white" /> : <LogIn size={35} />}
-        </button>
-      
-
-        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-
       </div>
+
+      {/* Push icon to the right */}
+      <button
+        onClick={() => setAuthOpen(true)}
+        title={logged ? "Account" : "Login"}
+        className="px-4 py-2 rounded-full !bg-purple-800 hover:bg-purple-700 flex items-center justify-center text-white text-xl"
+      >
+        {logged ? <UserRound /> : <LogIn />}
+      </button>
+    
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+
     </div>
   );
 }

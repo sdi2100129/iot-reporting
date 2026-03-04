@@ -230,6 +230,7 @@ def get_sensors(db : Session = Depends(get_db), current_user = Security(auth.get
         "data": db_sensors
     }
 
+
 @app.get("/sensors/{sensorId}")
 def get_sensor_by_id(sensorId: int, db : Session = Depends(get_db), current_user = Security(auth.get_current_user, scopes=["sensor:read"])):
     """

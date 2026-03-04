@@ -27,6 +27,10 @@ export function getScopes() {
   }
 }
 
+export function hasScope(scope) {
+  return getScopes().includes(scope);
+}
+
 export function isLoggedIn() {
   return Boolean(getToken());
 }

@@ -1,7 +1,12 @@
 // Handles Add / Update form UI
+import { hasScope } from "../../Auth";
 
 export default function SensorForm({ newSensors, setNewSensors, addSensor, updateSensor }) {
   const fields = ["sensorId", "type", "vendorName", "vendorEmail", "description", "location"]
+
+  const canAdd = hasScope("sensor:write");
+
+  if (!canAdd) return null;
 
   const handleInputChange = (index, field, value) => {
     const updatedSensors = [...newSensors]

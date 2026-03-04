@@ -156,7 +156,7 @@ export default function Sensors() {
         />
       </div>
 
-      <hr />
+      <br />
  
       <SensorForm
         newSensors={newSensors}
