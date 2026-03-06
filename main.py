@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Query
 from models import Sensor, SensorReading
 from database import SessionLocal, engine
 from sqlalchemy.orm import Session
@@ -19,6 +19,7 @@ from datetime import timedelta, datetime
 from fastapi.middleware.cors import CORSMiddleware
 import auth
 from fastapi import Security
+from ml.forecast import arima_forecast
 
 
 logging.basicConfig(
@@ -608,3 +609,114 @@ def get_all_readings(sensor_type: str = None, location: str = None, db: Session 
     if location:
         query = query.filter(db_models.Sensor.location == location)
     return {"success": True, "data": query.all()}
+
+
+
+from ml.series import build_series_from_rows
+from ml.diagnostics import stationarity_tests, quick_model_scores
+
+@app.get("/forecast/diagnostics")
+def forecast_diagnostics(
+    reading_type: str = Query("Temperature"),
+    location: str = Query(...),
+    freq: str = Query("2h"),
+    seasonal_period: int = Query(12),
+    db: Session = Depends(get_db),
+    current_user = Security(auth.get_current_user, scopes=["reading:read"])
+):
+    # Find sensors in that location + type
+    sensors = db.query(db_models.Sensor.sensorId).filter(
+        db_models.Sensor.location == location,
+        db_models.Sensor.type == reading_type
+    ).all()
+
+    sensor_ids = [sid for (sid,) in sensors]
+
+    if not sensor_ids:
+        raise HTTPException(status_code=404, detail="No sensors found for that location/type")
+
+    # Fetch readings for those sensors + type
+    rows = db.query(db_models.SensorReading).filter(
+        db_models.SensorReading.sensorId.in_(sensor_ids),
+        db_models.SensorReading.readingType == reading_type
+    ).all()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="No readings found for that location/type")
+
+    # Build time series
+    series = build_series_from_rows(rows, freq=freq)
+
+    # Compute diagnostics
+    stats = stationarity_tests(series)
+    scores = quick_model_scores(series, seasonal_period=seasonal_period)
+
+    return {
+        "location": location,
+        "reading_type": reading_type,
+        "freq": freq,
+        "seasonal_period": seasonal_period,
+        "n_points": int(series.dropna().shape[0]),
+        "stationarity": stats,
+        "model_fit": scores
+    }
+
+
+
+@app.get("/forecast/arima")
+def get_arima_forecast(
+    reading_type: str = Query("Temperature"),
+    location: str = Query(...),
+    freq: str = Query("1D"),   # because our chart is daily averages
+    steps: int = Query(7),     # next 7 days
+    p: int = Query(1),
+    d: int = Query(1),
+    q: int = Query(1),
+    db: Session = Depends(get_db),
+    current_user = Security(auth.get_current_user, scopes=["reading:read"])
+):
+    
+    # Step A — find the correct sensor(s) based on location + type
+    sensors = db.query(db_models.Sensor.sensorId).filter(
+        db_models.Sensor.location == location,
+        db_models.Sensor.type == reading_type
+    ).all()
+
+    sensor_ids = [sid for (sid,) in sensors]
+
+    if not sensor_ids:
+        raise HTTPException(status_code=404, detail="No sensors found for that location/type")
+
+    # Step B — get the readings
+    rows = db.query(db_models.SensorReading).filter(
+        db_models.SensorReading.sensorId.in_(sensor_ids),
+        db_models.SensorReading.readingType == reading_type
+    ).all()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="No readings found for that location/type")
+
+    # Step C — convert the rows into a pandas time series
+    raw_series = build_series_from_rows(rows, freq="2h")
+
+    # Step D — convert to daily values, because our chart is showing daily mean temperature
+    if freq == "1D":
+        series = raw_series.resample("1D").mean().interpolate()
+    else:
+        series = raw_series.asfreq(freq).interpolate()
+
+    # Step E — fit ARIMA
+    result = arima_forecast(series, steps=steps, order=(p, d, q))
+
+    return {
+        "location": location,
+        "reading_type": reading_type,
+        "freq": freq,
+        "steps": steps,
+        "history_points": int(series.dropna().shape[0]),
+        "order": result["order"],
+        "aic": result["aic"],
+        "forecast": result["forecast"]
+    }
+
+

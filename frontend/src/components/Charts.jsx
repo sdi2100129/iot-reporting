@@ -88,6 +88,9 @@ export default function Charts() {
     const [sensors, setSensors] = useState([]);
     const [error, setError] = useState(null);
 
+    // Store forecast arrays by location.
+    const [arimaForecasts, setArimaForecasts] = useState({});
+
     const fetchReadings = async () => {
         try {
         const res = await api.get("/readings/all", {
@@ -272,6 +275,7 @@ export default function Charts() {
         High: "#ef4444"   
     };
 
+    const LINE_COLORS = ["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"];
 
     // Extract unique locations that have Temperature readings (for multi-line chart)
     const tempLocations = useMemo(() => {
@@ -326,7 +330,7 @@ export default function Charts() {
             //  make the first forecast point “1 step after the last tail point”
             const x = (tail.length - 1) + (i + 1);
             const y = a + b * x;
-            futureRows[i][`${loc} (Forecast)`] = Number(y.toFixed(1));
+            futureRows[i][`${loc} (Linear Forecast)`] = Number(y.toFixed(1));
             }
         });
 
@@ -334,10 +338,117 @@ export default function Charts() {
     }, [multiLocationData, tempLocations]);
 
 
-    // Combine actual and forecast data for unified charting
-    const multiLocationWithForecast = useMemo(() => {
-        return [...multiLocationData, ...forecastData];
+
+    // fetch ARIMA for each temperature location and store in a map { location → forecast[] }
+    const fetchArimaForecasts = async (locations) => {
+        try {
+            const results = await Promise.all(
+            locations.map(async (location) => {
+                const res = await api.get("/forecast/arima", {
+                params: {
+                    reading_type: "Temperature",
+                    location,
+                    freq: "1D",
+                    steps: 7,
+                    p: 1,
+                    d: 1,
+                    q: 1
+                }
+                });
+
+                return {
+                location,
+                forecast: res.data.forecast || []
+                };
+            })
+            );
+
+            const forecastMap = {};
+            results.forEach(({ location, forecast }) => {
+            forecastMap[location] = forecast;
+            });
+
+            setArimaForecasts(forecastMap);
+        } catch (err) {
+            console.error("Failed to fetch ARIMA forecasts", err);
+        }
+    };
+
+    // Convert ARIMA API responses into rows that Recharts can draw
+    const forecastDataArima = useMemo(() => {
+        if (!tempLocations.length) return [];
+
+        const rowsByDate = {};
+
+        tempLocations.forEach((location) => {
+            const forecasts = arimaForecasts[location] || [];
+
+            forecasts.forEach((item) => {
+            const dateOnly = item.datetime.slice(0, 10);
+
+            if (!rowsByDate[dateOnly]) {
+                rowsByDate[dateOnly] = { datetime: dateOnly };
+            }
+
+            rowsByDate[dateOnly][`${location} (Arima Forecast)`] = item.forecast;
+            rowsByDate[dateOnly][`${location} (Arima Lower)`] = item.lower;
+            rowsByDate[dateOnly][`${location} (Arima Upper)`] = item.upper;
+            });
+        });
+
+        return Object.values(rowsByDate).sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+        );
+    }, [arimaForecasts, tempLocations]);
+
+
+
+    // Chart 1: Actual + Linear Forecast only
+    const multiLocationWithLinear = useMemo(() => {
+        const rowsByDate = {};
+
+        [...multiLocationData, ...forecastData].forEach((row) => {
+            const key = row.datetime;
+            if (!rowsByDate[key]) rowsByDate[key] = { datetime: key };
+            Object.assign(rowsByDate[key], row);
+        });
+
+        return Object.values(rowsByDate).sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+        );
     }, [multiLocationData, forecastData]);
+
+
+    // Chart 2: Actual + ARIMA Forecast only
+    const multiLocationWithArima = useMemo(() => {
+        const rowsByDate = {};
+
+        [...multiLocationData, ...forecastDataArima].forEach((row) => {
+            const key = row.datetime;
+            if (!rowsByDate[key]) rowsByDate[key] = { datetime: key };
+            Object.assign(rowsByDate[key], row);
+        });
+
+        return Object.values(rowsByDate).sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+        );
+    }, [multiLocationData, forecastDataArima]);
+   
+
+
+
+    useEffect(() => {
+        if (!readings.length || !tempLocations.length) return;
+        fetchArimaForecasts(tempLocations);
+    }, [readings, tempLocations]);
+
+
+    const tooltipFormatter = (value, name) => {
+        if (value == null) return ["", name];
+        const prettyValue = typeof value === "number" ? value.toFixed(1) : value;
+        return [`${prettyValue} °C`, name];
+    };
+
 
 
     return (
@@ -442,64 +553,127 @@ export default function Charts() {
         )}
 
 
-        {/* Multi-Line Time Series (Temperature per Location) */}
+
+
+        {/* Chart 1: Temperature Over Time + Linear Forecast */}
         {multiLocationData.length > 0 && (
-        <div className="mb-10 bg-white p-4 rounded shadow-md">
-            <h2 className="text-xl font-bold mb-4">
-            Temperature Over Time (Per Location)
-            </h2>
+            <div className="mb-10 bg-white p-4 rounded shadow-md">
+                <h2 className="text-xl font-bold mb-1">Temperature Over Time — Linear Forecast</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                    Dashed lines show a simple least-squares linear trend projected 7 days ahead.
+                </p>
 
-            <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={multiLocationWithForecast}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={multiLocationWithLinear}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="datetime" tick={{ fontSize: 12 }} />
+                        <YAxis unit="°C" />
+                        <Tooltip formatter={tooltipFormatter} />
+                        <Legend />
 
-                    <XAxis
-                    dataKey="datetime"
-                    tick={{ fontSize: 12 }}
-                    />
+                        {/* Actual lines */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={location}
+                                type="monotone"
+                                dataKey={location}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                dot={false}
+                                name={location}
+                            />
+                        ))}
 
-                    <YAxis unit="°C" />
-
-                    <Tooltip 
-                        formatter={(value, name) => {
-                            // name is the dataKey (e.g. "Athens" or "Athens (Forecast)")
-                            if (value == null) return ["", name];
-
-                            const unit = "°C";
-                            const prettyValue = typeof value === "number" ? value.toFixed(1) : value;
-                            typeof value === "number" ? value.toFixed(1) : value;
-
-                            return [`${prettyValue} ${unit}`];
-                        }}
-                    />
-                    <Legend />
-
-                    {/* Actual lines */}
-                    {tempLocations.map((location, index) => (
-                    <Line
-                        key={location}
-                        type="monotone"
-                        dataKey={location}
-                        stroke={["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"][index % 5]}
-                        dot={false}
-                    />
-                    ))}
-
-                    {/* Forecast lines (dashed) */}
-                    {tempLocations.map((location, index) => (
-                    <Line
-                        key={`${location}-forecast`}
-                        type="monotone"
-                        dataKey={`${location} (Forecast)`}
-                        stroke={["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"][index % 5]}
-                        strokeDasharray="6 6"
-                        dot={false}
-                    />
-                    ))}
-                </LineChart>
-            </ResponsiveContainer>
-        </div>
+                        {/* Linear Forecast lines (dashed) */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={`${location}-linear`}
+                                type="monotone"
+                                dataKey={`${location} (Linear Forecast)`}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeDasharray="5 5"
+                                dot={false}
+                                name={`${location} (Linear Forecast)`}
+                            />
+                        ))}
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
         )}
+
+
+        {/* Chart 2: Temperature Over Time + ARIMA Forecast */}
+        {multiLocationData.length > 0 && (
+            <div className="mb-10 bg-white p-4 rounded shadow-md">
+                <h2 className="text-xl font-bold mb-1">Temperature Over Time — ARIMA Forecast</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                    Dashed center line is the ARIMA(1,1,1) point forecast; dotted bands show the 95% confidence interval.
+                </p>
+
+                <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={multiLocationWithArima}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="datetime" tick={{ fontSize: 12 }} />
+                        <YAxis unit="°C" />
+                        <Tooltip formatter={tooltipFormatter} />
+                        <Legend />
+
+                        {/* Actual lines */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={location}
+                                type="monotone"
+                                dataKey={location}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                dot={false}
+                                name={location}
+                            />
+                        ))}
+
+                        {/* ARIMA center forecast (dashed) */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={`${location}-arima-forecast`}
+                                type="monotone"
+                                dataKey={`${location} (Arima Forecast)`}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeDasharray="6 3"
+                                dot={false}
+                                name={`${location} (Arima Forecast)`}
+                            />
+                        ))}
+
+                        {/* ARIMA lower bound (dotted) */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={`${location}-arima-lower`}
+                                type="monotone"
+                                dataKey={`${location} (Arima Lower)`}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeDasharray="1 4"
+                                strokeOpacity={0.5}
+                                dot={false}
+                                name={`${location} (Arima Lower)`}
+                            />
+                        ))}
+
+                        {/* ARIMA upper bound (dotted) */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={`${location}-arima-upper`}
+                                type="monotone"
+                                dataKey={`${location} (Arima Upper)`}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeDasharray="1 4"
+                                strokeOpacity={0.5}
+                                dot={false}
+                                name={`${location} (Arima Upper)`}
+                            />
+                        ))}
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+        )}
+
 
 
         {/* Temperature - Humidity correlation */}
