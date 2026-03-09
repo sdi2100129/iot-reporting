@@ -15,7 +15,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer, 
+  ReferenceLine
 } from "recharts";
 
 
@@ -90,6 +91,9 @@ export default function Charts() {
 
     // Store forecast arrays by location.
     const [arimaForecasts, setArimaForecasts] = useState({});
+
+    const [lstmForecasts, setLstmForecasts] = useState({});
+
 
     const fetchReadings = async () => {
         try {
@@ -380,6 +384,16 @@ export default function Charts() {
 
         const rowsByDate = {};
 
+        if (multiLocationData.length > 0) {
+            const lastActual = multiLocationData[multiLocationData.length - 1];
+            rowsByDate[lastActual.datetime] = { datetime: lastActual.datetime };
+            tempLocations.forEach(loc => {
+                if (lastActual[loc] != null) {
+                    rowsByDate[lastActual.datetime][`${loc} (Arima Forecast)`] = lastActual[loc];
+                }
+            });
+        }
+
         tempLocations.forEach((location) => {
             const forecasts = arimaForecasts[location] || [];
 
@@ -421,11 +435,18 @@ export default function Charts() {
 
     // Chart 2: Actual + ARIMA Forecast only
     const multiLocationWithArima = useMemo(() => {
+        // Store rows grouped by datetime to easily merge actual + forecast data
         const rowsByDate = {};
 
+        // Combine historical + forecast arrays
         [...multiLocationData, ...forecastDataArima].forEach((row) => {
+
+            // Use datetime as key
             const key = row.datetime;
+
+            // If this datetime hasn’t been seen before, create a new row object
             if (!rowsByDate[key]) rowsByDate[key] = { datetime: key };
+            // Merge row values
             Object.assign(rowsByDate[key], row);
         });
 
@@ -449,6 +470,92 @@ export default function Charts() {
         return [`${prettyValue} °C`, name];
     };
 
+
+    const fetchLstmForecasts = async (locations) => {
+        try {
+            const results = await Promise.all(
+            locations.map(async (location) => {
+                const res = await api.get("/forecast/lstm", {
+                params: {
+                    reading_type: "Temperature",
+                    location,
+                    freq: "1D",
+                    steps: 7,
+                    window_size: 7,
+                    epochs: 100
+                }
+                });
+
+                return {
+                location,
+                forecast: res.data.forecast || []
+                };
+            })
+            );
+
+            const forecastMap = {};
+            results.forEach(({ location, forecast }) => {
+            forecastMap[location] = forecast;
+            });
+
+            setLstmForecasts(forecastMap);
+        } catch (err) {
+            console.error("Failed to fetch LSTM forecasts", err);
+        }
+    };
+
+
+    useEffect(() => {
+    if (!readings.length || !tempLocations.length) return;
+    fetchLstmForecasts(tempLocations);
+    }, [readings, tempLocations]);
+
+
+    const forecastDataLstm = useMemo(() => {
+        if (!tempLocations.length) return [];
+
+        const rowsByDate = {};
+
+        // Bridge point — connect actual line to forecast line
+        if (multiLocationData.length > 0) {
+            const lastActual = multiLocationData[multiLocationData.length - 1];
+            rowsByDate[lastActual.datetime] = { datetime: lastActual.datetime };
+            tempLocations.forEach(loc => {
+                if (lastActual[loc] != null) {
+                    rowsByDate[lastActual.datetime][`${loc} (LSTM Forecast)`] = lastActual[loc];
+                }
+            });
+        }
+
+        tempLocations.forEach((location) => {
+            const forecasts = lstmForecasts[location] || [];
+            forecasts.forEach((item) => {
+                const dateOnly = item.datetime.slice(0, 10);
+                if (!rowsByDate[dateOnly]) rowsByDate[dateOnly] = { datetime: dateOnly };
+                rowsByDate[dateOnly][`${location} (LSTM Forecast)`] = item.forecast;
+            });
+        });
+
+        return Object.values(rowsByDate).sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+        );
+    }, [lstmForecasts, tempLocations, multiLocationData]);
+
+
+
+    const multiLocationWithLstm = useMemo(() => {
+        const rowsByDate = {};
+
+        [...multiLocationData, ...forecastDataLstm].forEach((row) => {
+            const key = row.datetime;
+            if (!rowsByDate[key]) rowsByDate[key] = { datetime: key };
+            Object.assign(rowsByDate[key], row);
+        });
+
+        return Object.values(rowsByDate).sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+        );
+    }, [multiLocationData, forecastDataLstm]);
 
 
     return (
@@ -554,7 +661,6 @@ export default function Charts() {
 
 
 
-
         {/* Chart 1: Temperature Over Time + Linear Forecast */}
         {multiLocationData.length > 0 && (
             <div className="mb-10 bg-white p-4 rounded shadow-md">
@@ -615,7 +721,25 @@ export default function Charts() {
                         <XAxis dataKey="datetime" tick={{ fontSize: 12 }} />
                         <YAxis unit="°C" />
                         <Tooltip formatter={tooltipFormatter} />
-                        <Legend />
+
+                        {/* Clean legend — only one entry per location */}
+                        <Legend
+                            payload={tempLocations.map((location, index) => ({
+                                value: location,
+                                type: "line",
+                                color: LINE_COLORS[index % LINE_COLORS.length],
+                            }))}
+                        />
+
+                        {/* Vertical line marking where forecast begins */}
+                        {multiLocationData.length > 0 && (
+                            <ReferenceLine
+                                x={multiLocationData[multiLocationData.length - 1].datetime}
+                                stroke="#888"
+                                strokeDasharray="4 4"
+                                label={{ value: "Forecast →", position: "insideTopRight", fontSize: 11, fill: "#888" }}
+                            />
+                        )}
 
                         {/* Actual lines */}
                         {tempLocations.map((location, index) => (
@@ -625,6 +749,7 @@ export default function Charts() {
                                 dataKey={location}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
                                 dot={false}
+                                legendType="none"
                                 name={location}
                             />
                         ))}
@@ -638,6 +763,7 @@ export default function Charts() {
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
                                 strokeDasharray="6 3"
                                 dot={false}
+                                legendType="none"
                                 name={`${location} (Arima Forecast)`}
                             />
                         ))}
@@ -652,6 +778,7 @@ export default function Charts() {
                                 strokeDasharray="1 4"
                                 strokeOpacity={0.5}
                                 dot={false}
+                                legendType="none"
                                 name={`${location} (Arima Lower)`}
                             />
                         ))}
@@ -666,6 +793,7 @@ export default function Charts() {
                                 strokeDasharray="1 4"
                                 strokeOpacity={0.5}
                                 dot={false}
+                                legendType="none"
                                 name={`${location} (Arima Upper)`}
                             />
                         ))}
@@ -674,6 +802,68 @@ export default function Charts() {
             </div>
         )}
 
+
+        {/* Chart 3: Temperature Over Time + LSTM Forecast */}
+        {multiLocationData.length > 0 && (
+            <div className="mb-10 bg-white p-4 rounded shadow-md">
+                <h2 className="text-xl font-bold mb-1">Temperature Over Time — LSTM Forecast</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                    Dashed lines show a neural network forecast trained on 2-hour intervals, projected 12 steps ahead.
+                </p>
+
+                <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={multiLocationWithLstm}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="datetime" tick={{ fontSize: 12 }} />
+                        <YAxis unit="°C" />
+                        <Tooltip formatter={tooltipFormatter} />
+
+                        <Legend
+                            payload={tempLocations.map((location, index) => ({
+                                value: location,
+                                type: "line",
+                                color: LINE_COLORS[index % LINE_COLORS.length],
+                            }))}
+                        />
+
+                        {/* Vertical line marking where forecast begins */}
+                        {multiLocationData.length > 0 && (
+                            <ReferenceLine
+                                x={multiLocationData[multiLocationData.length - 1].datetime}
+                                stroke="#888"
+                                strokeDasharray="4 4"
+                                label={{ value: "Forecast →", position: "insideTopRight", fontSize: 11, fill: "#888" }}
+                            />
+                        )}
+
+                        {/* Actual lines */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={location}
+                                type="monotone"
+                                dataKey={location}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                dot={false}
+                                legendType="none"
+                            />
+                        ))}
+
+                        {/* LSTM Forecast lines (dashed) */}
+                        {tempLocations.map((location, index) => (
+                            <Line
+                                key={`${location}-lstm`}
+                                type="monotone"
+                                dataKey={`${location} (LSTM Forecast)`}
+                                stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeDasharray="5 3"
+                                dot={false}
+                                legendType="none"
+                            />
+                        ))}
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+        )}
 
 
         {/* Temperature - Humidity correlation */}

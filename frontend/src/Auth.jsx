@@ -19,6 +19,15 @@ export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+function isTokenExpired(token) {
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return payload.exp * 1000 < Date.now(); // exp is in seconds, Date.now() in ms
+    } catch {
+        return true; // if decode fails, treat as expired
+    }
+}
+
 export function getScopes() {
   try {
     return JSON.parse(localStorage.getItem(SCOPES_KEY) || "[]");
@@ -32,5 +41,11 @@ export function hasScope(scope) {
 }
 
 export function isLoggedIn() {
-  return Boolean(getToken());
+  const token = getToken();
+  if (!token) return false;
+  if (isTokenExpired(token)) {
+    clearAuth(); // clean up the stale token automatically
+    return false;
+  }
+  return true;
 }

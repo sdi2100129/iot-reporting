@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import auth
 from fastapi import Security
 from ml.forecast import arima_forecast
-
+from ml.lstm_forecast import lstm_forecast
 
 logging.basicConfig(
     level=logging.INFO,
@@ -719,4 +719,58 @@ def get_arima_forecast(
         "forecast": result["forecast"]
     }
 
+
+@app.get("/forecast/lstm")
+def get_lstm_forecast(
+    reading_type: str = Query("Temperature"),
+    location: str = Query(...),
+    freq: str = Query("2h"),
+    steps: int = Query(12),
+    window_size: int = Query(12),
+    epochs: int = Query(100),
+    db: Session = Depends(get_db),
+    current_user = Security(auth.get_current_user, scopes=["reading:read"])
+):
+    sensors = db.query(db_models.Sensor.sensorId).filter(
+        db_models.Sensor.location == location,
+        db_models.Sensor.type == reading_type
+    ).all()
+
+    sensor_ids = [sid for (sid,) in sensors]
+
+    if not sensor_ids:
+        raise HTTPException(status_code=404, detail="No sensors found for that location/type")
+
+    rows = db.query(db_models.SensorReading).filter(
+        db_models.SensorReading.sensorId.in_(sensor_ids),
+        db_models.SensorReading.readingType == reading_type
+    ).all()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="No readings found for that location/type")
+
+    raw_series = build_series_from_rows(rows, freq="2h")
+
+    if freq == "1D":
+        series = raw_series.resample("1D").mean().interpolate()
+    else:
+        series = raw_series.asfreq(freq).interpolate()
+
+    result = lstm_forecast(
+        series,
+        steps=steps,
+        window_size=window_size,
+        epochs=epochs
+    )
+
+    return {
+        "location": location,
+        "reading_type": reading_type,
+        "freq": freq,
+        "steps": steps,
+        "history_points": int(series.dropna().shape[0]),
+        "window_size": result["window_size"],
+        "epochs": result["epochs"],
+        "forecast": result["forecast"]
+    }
 

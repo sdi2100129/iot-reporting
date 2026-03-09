@@ -8,8 +8,23 @@ import Readings from "./components/Readings/Readings.jsx"
 import Metrics from "./components/Metrics"
 import Charts from "./components/Charts"
 import {BrowserRouter as Router, Route, Routes, Link} from "react-router-dom"
+import { useEffect } from "react";
+import { isLoggedIn } from "./Auth";
+
 
 const App = () => {
+
+  useEffect(() => {
+      const interval = setInterval(() => {
+          if (!isLoggedIn()) {  // isLoggedIn() already calls clearAuth() if expired
+              window.dispatchEvent(new Event("auth:changed"));
+          }
+      }, 60 * 1000); // check every 60 seconds
+
+      return () => clearInterval(interval);
+  }, []);
+
+
   const name = "IoT Reporting Frontend"
   const description = "The frontend is set up and ready to fetch data from the backend API."
 

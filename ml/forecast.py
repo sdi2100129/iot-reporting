@@ -11,6 +11,7 @@ def arima_forecast(series, steps=7, order=(1, 1, 1)):
     model = SARIMAX(
         y,
         order=order,
+        # Disable seasonality
         seasonal_order=(0, 0, 0, 0),
         enforce_stationarity=False,
         enforce_invertibility=False
@@ -20,6 +21,7 @@ def arima_forecast(series, steps=7, order=(1, 1, 1)):
     forecast_res = results.get_forecast(steps=steps)
 
     mean = forecast_res.predicted_mean
+    # prediction intervals at 95% confidence
     ci = forecast_res.conf_int()
 
     forecast_rows = []
