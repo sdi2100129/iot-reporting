@@ -91,8 +91,11 @@ export default function Charts() {
 
     // Store forecast arrays by location.
     const [arimaForecasts, setArimaForecasts] = useState({});
-
+    // Store forecast arrays by location.
     const [lstmForecasts, setLstmForecasts] = useState({});
+
+    const [arimaLoading, setArimaLoading] = useState(false);
+    const [lstmLoading, setLstmLoading] = useState(false);
 
 
     const fetchReadings = async () => {
@@ -279,7 +282,8 @@ export default function Charts() {
         High: "#ef4444"   
     };
 
-    const LINE_COLORS = ["#DDB771", "#6BBF59", "#08A045", "#0B6E4F", "#073B3A"];
+
+    const LINE_COLORS = ["#eb1818", "#2196F3", "#47361c", "#e06223", "#1ea23a"];
 
     // Extract unique locations that have Temperature readings (for multi-line chart)
     const tempLocations = useMemo(() => {
@@ -345,6 +349,7 @@ export default function Charts() {
 
     // fetch ARIMA for each temperature location and store in a map { location → forecast[] }
     const fetchArimaForecasts = async (locations) => {
+        setArimaLoading(true);
         try {
             const results = await Promise.all(
             locations.map(async (location) => {
@@ -375,8 +380,11 @@ export default function Charts() {
             setArimaForecasts(forecastMap);
         } catch (err) {
             console.error("Failed to fetch ARIMA forecasts", err);
-        }
+        }finally {
+            setArimaLoading(false);
+    }
     };
+
 
     // Convert ARIMA API responses into rows that Recharts can draw
     const forecastDataArima = useMemo(() => {
@@ -456,14 +464,6 @@ export default function Charts() {
     }, [multiLocationData, forecastDataArima]);
    
 
-
-
-    useEffect(() => {
-        if (!readings.length || !tempLocations.length) return;
-        fetchArimaForecasts(tempLocations);
-    }, [readings, tempLocations]);
-
-
     const tooltipFormatter = (value, name) => {
         if (value == null) return ["", name];
         const prettyValue = typeof value === "number" ? value.toFixed(1) : value;
@@ -472,43 +472,48 @@ export default function Charts() {
 
 
     const fetchLstmForecasts = async (locations) => {
+        setLstmLoading(true);
         try {
-            const results = await Promise.all(
-            locations.map(async (location) => {
-                const res = await api.get("/forecast/lstm", {
-                params: {
-                    reading_type: "Temperature",
-                    location,
-                    freq: "1D",
-                    steps: 7,
-                    window_size: 7,
-                    epochs: 100
-                }
-                });
-
-                return {
-                location,
-                forecast: res.data.forecast || []
-                };
-            })
-            );
-
             const forecastMap = {};
-            results.forEach(({ location, forecast }) => {
-            forecastMap[location] = forecast;
-            });
+
+            // Sequential instead of parallel — each trains without competing
+            for (const location of locations) {
+                const res = await api.get("/forecast/lstm", {
+                    params: {
+                        reading_type: "Temperature",
+                        location,
+                        freq: "1D",
+                        steps: 7,
+                        window_size: 5,
+                        epochs: 30,
+                        batch_size: 16
+                    }
+                });
+                forecastMap[location] = res.data.forecast || [];
+            }
+
 
             setLstmForecasts(forecastMap);
         } catch (err) {
             console.error("Failed to fetch LSTM forecasts", err);
+        } finally { 
+            setLstmLoading(false);
         }
     };
 
 
+    
     useEffect(() => {
-    if (!readings.length || !tempLocations.length) return;
-    fetchLstmForecasts(tempLocations);
+        if (!readings.length || !tempLocations.length) return;
+        
+        // Reset forecasts when new readings come in
+        setArimaForecasts({});
+        setLstmForecasts({});
+
+        fetchArimaForecasts(tempLocations);
+        fetchLstmForecasts(tempLocations);
     }, [readings, tempLocations]);
+
 
 
     const forecastDataLstm = useMemo(() => {
@@ -557,6 +562,21 @@ export default function Charts() {
         );
     }, [multiLocationData, forecastDataLstm]);
 
+
+
+    const renderSimpleLegend = () => (
+        <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm">
+            {tempLocations.map((location, index) => (
+                <div key={location} className="flex items-center gap-2">
+                    <span
+                        className="inline-block w-8 h-0.5"
+                        style={{ backgroundColor: LINE_COLORS[index % LINE_COLORS.length] }}
+                    />
+                    <span>{location}</span>
+                </div>
+            ))}
+        </div>
+    );
 
     return (
     <div className="w-full p-4">
@@ -684,6 +704,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={location}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 dot={false}
                                 name={location}
                             />
@@ -696,6 +717,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={`${location} (Linear Forecast)`}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 strokeDasharray="5 5"
                                 dot={false}
                                 name={`${location} (Linear Forecast)`}
@@ -712,7 +734,7 @@ export default function Charts() {
             <div className="mb-10 bg-white p-4 rounded shadow-md">
                 <h2 className="text-xl font-bold mb-1">Temperature Over Time — ARIMA Forecast</h2>
                 <p className="text-sm text-gray-500 mb-4">
-                    Dashed center line is the ARIMA(1,1,1) point forecast; dotted bands show the 95% confidence interval.
+                    Dashed center line is the ARIMA(1,1,1) point forecast; dotted bands show the confidence interval.
                 </p>
 
                 <ResponsiveContainer width="100%" height={350}>
@@ -723,13 +745,7 @@ export default function Charts() {
                         <Tooltip formatter={tooltipFormatter} />
 
                         {/* Clean legend — only one entry per location */}
-                        <Legend
-                            payload={tempLocations.map((location, index) => ({
-                                value: location,
-                                type: "line",
-                                color: LINE_COLORS[index % LINE_COLORS.length],
-                            }))}
-                        />
+                        <Legend content={renderSimpleLegend} />
 
                         {/* Vertical line marking where forecast begins */}
                         {multiLocationData.length > 0 && (
@@ -748,6 +764,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={location}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 dot={false}
                                 legendType="none"
                                 name={location}
@@ -761,6 +778,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={`${location} (Arima Forecast)`}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 strokeDasharray="6 3"
                                 dot={false}
                                 legendType="none"
@@ -775,6 +793,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={`${location} (Arima Lower)`}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 strokeDasharray="1 4"
                                 strokeOpacity={0.5}
                                 dot={false}
@@ -790,6 +809,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={`${location} (Arima Upper)`}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 strokeDasharray="1 4"
                                 strokeOpacity={0.5}
                                 dot={false}
@@ -808,7 +828,7 @@ export default function Charts() {
             <div className="mb-10 bg-white p-4 rounded shadow-md">
                 <h2 className="text-xl font-bold mb-1">Temperature Over Time — LSTM Forecast</h2>
                 <p className="text-sm text-gray-500 mb-4">
-                    Dashed lines show a neural network forecast trained on 2-hour intervals, projected 12 steps ahead.
+                    Dashed lines show a neural network forecast trained on daily intervals, projected 7 days ahead.
                 </p>
 
                 <ResponsiveContainer width="100%" height={350}>
@@ -818,13 +838,7 @@ export default function Charts() {
                         <YAxis unit="°C" />
                         <Tooltip formatter={tooltipFormatter} />
 
-                        <Legend
-                            payload={tempLocations.map((location, index) => ({
-                                value: location,
-                                type: "line",
-                                color: LINE_COLORS[index % LINE_COLORS.length],
-                            }))}
-                        />
+                        <Legend content={renderSimpleLegend} />
 
                         {/* Vertical line marking where forecast begins */}
                         {multiLocationData.length > 0 && (
@@ -843,6 +857,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={location}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 dot={false}
                                 legendType="none"
                             />
@@ -855,6 +870,7 @@ export default function Charts() {
                                 type="monotone"
                                 dataKey={`${location} (LSTM Forecast)`}
                                 stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                                strokeWidth={2.5}
                                 strokeDasharray="5 3"
                                 dot={false}
                                 legendType="none"

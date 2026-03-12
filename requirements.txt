@@ -44,3 +44,5 @@ statsmodels==0.14.6
 matplotlib
 tensorflow==2.20.0
 scikit-learn==1.8.0
+ucimlrepo==0.0.7
+tqdm==4.67.3

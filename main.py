@@ -6,7 +6,7 @@ import db_models
 from datetime import date, time
 from fastapi import HTTPException
 from sampledata.sensors import Sensors
-from sampledata.readings import Readings
+from sampledata.UCIreadings import Readings
 import logging
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -41,7 +41,7 @@ db_models.base.metadata.create_all(bind=engine)
 #    db = SessionLocal()
 #
 #    try:
-        # Σειρά έχει σημασία
+        # Order matters
 #        db.query(db_models.SensorReading).delete()
 #        db.query(db_models.Sensor).delete()
 #
@@ -52,35 +52,35 @@ db_models.base.metadata.create_all(bind=engine)
         # ---- Re-seed Sensors ----
 #        for sensor in Sensors:
 #            db_sensor = db_models.Sensor(
-#                sensorId=sensor.sensorId,
-#                type=sensor.type,
-#                vendorName=sensor.vendorName,
-#                vendorEmail=sensor.vendorEmail,
-#                description=sensor.description,
-#                location=sensor.location
-#            )
+#               sensorId=sensor.sensorId,
+#               type=sensor.type,
+#               vendorName=sensor.vendorName,
+#               vendorEmail=sensor.vendorEmail,
+#               description=sensor.description,
+#               location=sensor.location
+#           )
 #            db.add(db_sensor)
 #
         # ---- Re-seed Readings ----
 #        for r in Readings:
-#            db_reading = db_models.SensorReading(
-#                id=r.id,
-#                sensorId=r.sensorId,
-#                readingType=r.readingType,
-#                readingValue=r.readingValue,
-#                readingDate=r.readingDate,
-#                readingTime=r.readingTime,
-#                description=r.description
-#            )
-#            db.add(db_reading)
+#           db_reading = db_models.SensorReading(
+#               id=r.id,
+#               sensorId=r.sensorId,
+#               readingType=r.readingType,
+#               readingValue=r.readingValue,
+#               readingDate=r.readingDate,
+#               readingTime=r.readingTime,
+#               description=r.description
+#           )
+#           db.add(db_reading)
 #
 #        db.commit()
 #        logger.info("Database re-seeded")
 #
 #    except Exception as e:
-#        db.rollback()
-#        logger.error(f"Reset failed: {e}")
-#        raise
+#       db.rollback()
+#       logger.error(f"Reset failed: {e}")
+#       raise
 #
 #    finally:
 #        db.close()
@@ -725,7 +725,7 @@ def get_lstm_forecast(
     reading_type: str = Query("Temperature"),
     location: str = Query(...),
     freq: str = Query("2h"),
-    steps: int = Query(12),
+    steps: int = Query(24),
     window_size: int = Query(12),
     epochs: int = Query(100),
     db: Session = Depends(get_db),

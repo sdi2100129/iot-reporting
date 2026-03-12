@@ -27,5 +27,8 @@ def build_series_from_rows(rows, freq="2h"):
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     s = df.set_index("timestamp")["value"]
 
+    # UCI data can produce duplicate timestamps — we collapse them before asfreq
+    s = s.groupby(s.index).mean()
+
     s = s.asfreq(freq).interpolate()
     return s

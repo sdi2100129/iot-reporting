@@ -271,3 +271,20 @@ On top of Tailwind, the project uses a component library (shadcn/ui) to accelera
 - Dashboards
 
 This combination significantly reduces development time and ensures a modern, professional look.
+
+
+
+temperature = real
+
+acoustic = transformed from real sound
+
+humidity = synthetic proxy
+
+locations = fictional mapping
+
+Sensor data is based on the
+UCI Room Occupancy Estimation dataset.
+
+• collected from a real sensor testbed
+• 7 sensor nodes transmitting every 30 seconds
+• includes temperature, sound, light, CO2 and PIR sensors
